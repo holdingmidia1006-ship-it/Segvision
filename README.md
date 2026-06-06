@@ -13,6 +13,7 @@ orçamentos, serviços, custos reais, documentos e preparação fiscal.
 ## Funcionalidades
 
 - Login e primeiro acesso com Supabase Auth
+- Confirmação de e-mail compatível com PKCE/SSR
 - Clientes com endereço principal
 - Equipe com diária, meia diária e bônus
 - Orçamento e serviço como um único ciclo operacional
@@ -55,6 +56,9 @@ A migration inicial está em `supabase/migrations`. Ela cria:
 - buckets privados `document-templates`, `generated-documents` e
   `service-attachments`;
 - tipos de serviço e itens básicos.
+
+No Supabase Auth, inclua os endereços local e de produção em **Redirect
+URLs**, ambos com o caminho `/auth/confirm`.
 
 Para aplicar em um projeto já vinculado:
 

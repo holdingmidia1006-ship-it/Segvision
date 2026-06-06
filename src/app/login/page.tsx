@@ -8,9 +8,14 @@ import {
 
 export const metadata = { title: "Entrar" };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ confirmation?: string }>;
+}) {
   const configured = isSupabaseConfigured();
   const supabase = await createServerSupabase();
+  const { confirmation } = await searchParams;
 
   if (supabase) {
     const {
@@ -48,7 +53,16 @@ export default async function LoginPage() {
         </div>
       </section>
       <section className="login-panel">
-        <LoginForm configured={configured} />
+        <LoginForm
+          configured={configured}
+          initialMessage={
+            confirmation === "failed"
+              ? "O link de confirmação é inválido ou expirou."
+              : confirmation === "unavailable"
+                ? "A confirmação de acesso está temporariamente indisponível."
+                : undefined
+          }
+        />
       </section>
     </main>
   );
