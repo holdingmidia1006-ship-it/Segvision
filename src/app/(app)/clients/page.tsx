@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { createClient, deleteClient } from "@/lib/actions";
-import { getClients, isDemoMode } from "@/lib/data";
+import { getClients, getCurrentProfile, isDemoMode } from "@/lib/data";
 
 export const metadata = { title: "Clientes" };
 
@@ -22,6 +22,8 @@ export default async function ClientsPage({
 }) {
   const clients = await getClients();
   const demo = isDemoMode();
+  const profile = demo ? null : await getCurrentProfile();
+  const isAdmin = demo || profile?.role === "ADMIN";
   const query = await searchParams;
 
   return (
@@ -84,7 +86,7 @@ export default async function ClientsPage({
                   <span className="status-badge status-running">
                     {client.active ? "Ativo" : "Inativo"}
                   </span>
-                  {!demo ? (
+                  {!demo && isAdmin ? (
                     <form action={deleteClient}>
                       <input type="hidden" name="id" value={client.id} />
                       <button

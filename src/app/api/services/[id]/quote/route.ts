@@ -179,11 +179,13 @@ export async function GET(
   if (!service) return new Response("Serviço não encontrado.", { status: 404 });
 
   const supabase = await createServerSupabase();
+  let userId: string | null = null;
   if (supabase) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return new Response("Acesso não autorizado.", { status: 401 });
+    userId = user.id;
   }
 
   let output: Buffer;
@@ -245,6 +247,7 @@ export async function GET(
         service_id: service.id,
         name: fileName,
         storage_path: storagePath,
+        created_by: userId,
       });
     if (insertError) throw insertError;
   }

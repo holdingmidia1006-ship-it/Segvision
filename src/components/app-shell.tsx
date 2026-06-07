@@ -24,22 +24,29 @@ import { cn, initials } from "@/lib/utils";
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clientes", icon: Users },
-  { href: "/team", label: "Equipe", icon: Wrench },
+  { href: "/team", label: "Equipe", icon: Wrench, adminOnly: true },
   { href: "/services", label: "Serviços", icon: BriefcaseBusiness },
   { href: "/board", label: "Quadro", icon: ClipboardList },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/invoices", label: "Notas", icon: ReceiptText },
-  { href: "/settings", label: "Configurações", icon: Settings },
+  {
+    href: "/settings",
+    label: "Configurações",
+    icon: Settings,
+    adminOnly: true,
+  },
 ];
 
 export function AppShell({
   children,
   demo,
   userEmail,
+  role,
 }: {
   children: React.ReactNode;
   demo: boolean;
   userEmail?: string | null;
+  role?: "ADMIN" | "OPERADOR";
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -68,7 +75,9 @@ export function AppShell({
 
         <nav className="main-nav" aria-label="Menu principal">
           <p>OPERAÇÃO</p>
-          {navigation.map((item) => {
+          {navigation
+            .filter((item) => !item.adminOnly || demo || role === "ADMIN")
+            .map((item) => {
             const Icon = item.icon;
             const active =
               pathname === item.href ||
@@ -84,7 +93,7 @@ export function AppShell({
                 <span>{item.label}</span>
               </Link>
             );
-          })}
+            })}
         </nav>
 
         <div className="sidebar-help">
@@ -97,7 +106,13 @@ export function AppShell({
           <div className="avatar">{initials(displayName)}</div>
           <div>
             <strong>{displayName}</strong>
-            <span>{demo ? "Modo demonstração" : "Acesso interno"}</span>
+            <span>
+              {demo
+                ? "Modo demonstração"
+                : role === "ADMIN"
+                  ? "Administrador"
+                  : "Operador"}
+            </span>
           </div>
           {!demo ? (
             <form action={signOut}>

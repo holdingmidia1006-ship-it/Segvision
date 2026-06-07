@@ -40,6 +40,21 @@ async function requireSession() {
   return { supabase, user };
 }
 
+async function requireAdminSession() {
+  const session = await requireSession();
+  const { data: profile, error } = await session.supabase
+    .from("profiles")
+    .select("role,active")
+    .eq("id", session.user.id)
+    .single();
+
+  if (error || !profile?.active || profile.role !== "ADMIN") {
+    throw new Error("Ação permitida apenas para administradores.");
+  }
+
+  return session;
+}
+
 export async function signOut() {
   const supabase = await createServerSupabase();
   if (supabase) await supabase.auth.signOut();
@@ -91,7 +106,7 @@ export async function createClient(formData: FormData) {
 
 export async function deleteClient(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
-  const { supabase } = await requireSession();
+  const { supabase } = await requireAdminSession();
   const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/clients");
@@ -107,7 +122,7 @@ export async function createEmployee(formData: FormData) {
     default_bonus: numberValue(formData.get("default_bonus")),
     notes: optionalText.parse(formData.get("notes")),
   };
-  const { supabase } = await requireSession();
+  const { supabase } = await requireAdminSession();
   const { error } = await supabase.from("employees").insert(input);
   if (error) throw error;
   revalidatePath("/team");
@@ -116,7 +131,7 @@ export async function createEmployee(formData: FormData) {
 
 export async function deleteEmployee(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
-  const { supabase } = await requireSession();
+  const { supabase } = await requireAdminSession();
   const { error } = await supabase.from("employees").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/team");
@@ -303,7 +318,7 @@ export async function uploadDocumentTemplate(formData: FormData) {
     throw new Error("O template precisa ser um arquivo .docx.");
   }
 
-  const { supabase, user } = await requireSession();
+  const { supabase, user } = await requireAdminSession();
   const path = `${user.id}/${Date.now()}-${safeFileName(file.name)}`;
   const { error: uploadError } = await supabase.storage
     .from("document-templates")
@@ -329,7 +344,7 @@ export async function uploadDocumentTemplate(formData: FormData) {
 }
 
 export async function createServiceType(formData: FormData) {
-  const { supabase } = await requireSession();
+  const { supabase } = await requireAdminSession();
   const { error } = await supabase.from("service_types").insert({
     name: requiredText.parse(formData.get("name")),
     description: optionalText.parse(formData.get("description")),
@@ -339,7 +354,7 @@ export async function createServiceType(formData: FormData) {
 }
 
 export async function createCatalogItem(formData: FormData) {
-  const { supabase } = await requireSession();
+  const { supabase } = await requireAdminSession();
   const { error } = await supabase.from("catalog_items").insert({
     name: requiredText.parse(formData.get("name")),
     unit: String(formData.get("unit") ?? "un"),

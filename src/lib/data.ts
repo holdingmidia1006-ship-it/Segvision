@@ -20,8 +20,33 @@ import type {
 
 export const isDemoMode = () => !isSupabaseConfigured();
 
+export type AccessProfile = {
+  id: string;
+  role: "ADMIN" | "OPERADOR";
+  active: boolean;
+  full_name: string | null;
+};
+
 function rows<T>(data: unknown, fallback: T[]): T[] {
   return Array.isArray(data) ? (data as T[]) : fallback;
+}
+
+export async function getCurrentProfile() {
+  const supabase = await createServerSupabase();
+  if (!supabase) return null;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id,role,active,full_name")
+    .eq("id", user.id)
+    .single();
+
+  return (data as AccessProfile | null) ?? null;
 }
 
 export async function getClients() {

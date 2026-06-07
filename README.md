@@ -57,6 +57,15 @@ A migration inicial está em `supabase/migrations`. Ela cria:
   `service-attachments`;
 - tipos de serviço e itens básicos.
 
+### Perfis de acesso
+
+- `ADMIN`: gerencia todos os registros, usuários internos, equipe, catálogo,
+  templates e arquivos.
+- `OPERADOR`: mantém clientes compartilhados e acessa somente os serviços que
+  criou, incluindo itens, equipe escalada, custos, documentos e notas.
+- Operadores não podem alterar o próprio papel, reativar o próprio acesso,
+  excluir dados mestres ou editar o histórico de status.
+
 No Supabase Auth, inclua os endereços local e de produção em **Redirect
 URLs**, ambos com o caminho `/auth/confirm`.
 

@@ -1,9 +1,10 @@
 import { BadgeDollarSign, Phone, Plus, Trash2, UserCog } from "lucide-react";
+import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { createEmployee, deleteEmployee } from "@/lib/actions";
-import { getEmployees, isDemoMode } from "@/lib/data";
+import { getCurrentProfile, getEmployees, isDemoMode } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 
 export const metadata = { title: "Equipe" };
@@ -13,8 +14,11 @@ export default async function TeamPage({
 }: {
   searchParams: Promise<{ created?: string }>;
 }) {
-  const employees = await getEmployees();
   const demo = isDemoMode();
+  const profile = demo ? null : await getCurrentProfile();
+  if (!demo && profile?.role !== "ADMIN") redirect("/dashboard");
+
+  const employees = await getEmployees();
   const query = await searchParams;
 
   return (

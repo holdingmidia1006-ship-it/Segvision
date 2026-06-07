@@ -1,9 +1,11 @@
 import { Boxes, Info, ListPlus } from "lucide-react";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { createCatalogItem, createServiceType } from "@/lib/actions";
 import {
   getCatalogItems,
+  getCurrentProfile,
   getServiceTypes,
   isDemoMode,
 } from "@/lib/data";
@@ -12,11 +14,14 @@ import { formatCurrency } from "@/lib/utils";
 export const metadata = { title: "Configurações" };
 
 export default async function SettingsPage() {
+  const demo = isDemoMode();
+  const profile = demo ? null : await getCurrentProfile();
+  if (!demo && profile?.role !== "ADMIN") redirect("/dashboard");
+
   const [types, items] = await Promise.all([
     getServiceTypes(),
     getCatalogItems(),
   ]);
-  const demo = isDemoMode();
 
   return (
     <>
