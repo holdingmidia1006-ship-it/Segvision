@@ -34,6 +34,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "Geist", "Geist Fallback", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 button,
@@ -310,14 +312,14 @@ textarea:disabled {
 
 .button {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 1px solid transparent;
   border-radius: 10px;
   padding: 0 16px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 680;
   transition:
     transform 150ms ease,
@@ -353,10 +355,10 @@ textarea:disabled {
 }
 
 .button-small {
-  min-height: 34px;
+  min-height: 38px;
   border-radius: 8px;
-  padding: 0 11px;
-  font-size: 12px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 
 .button-full {
@@ -372,6 +374,7 @@ textarea:disabled {
 }
 
 .card {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 15px;
   background: var(--surface);
@@ -391,14 +394,15 @@ textarea:disabled {
 .card-header h3 {
   margin: 0;
   color: #1b2c45;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .card-header p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .card-body {
@@ -489,12 +493,22 @@ textarea:disabled {
   gap: 18px;
 }
 
+.dashboard-grid > *,
+.detail-grid > * {
+  min-width: 0;
+}
+
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 .data-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -503,7 +517,7 @@ textarea:disabled {
   border-bottom: 1px solid #e6ecf3;
   color: #718096;
   padding: 11px 14px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -513,7 +527,7 @@ textarea:disabled {
   border-bottom: 1px solid #edf1f6;
   color: #34445a;
   padding: 14px;
-  font-size: 12px;
+  font-size: 13px;
   vertical-align: middle;
 }
 
@@ -534,7 +548,7 @@ textarea:disabled {
   display: block;
   margin-top: 3px;
   color: #8491a3;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .status-badge {
@@ -650,13 +664,13 @@ textarea:disabled {
 .entity-card h3 {
   margin: 0;
   color: #1d304b;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .entity-card p {
   margin: 5px 0 0;
   color: #78879a;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -666,13 +680,15 @@ textarea:disabled {
   gap: 7px;
   margin-top: 16px;
   color: #53657b;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .entity-meta span {
   display: flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .entity-actions {
@@ -686,6 +702,7 @@ textarea:disabled {
 }
 
 .form-card {
+  width: 100%;
   max-width: 1000px;
 }
 
@@ -702,13 +719,14 @@ textarea:disabled {
 .form-section h3 {
   margin: 0 0 4px;
   color: #1d304b;
-  font-size: 15px;
+  font-size: 18px;
 }
 
 .form-section > p {
   margin: 0 0 18px;
   color: #7c8a9d;
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .form-grid {
@@ -727,7 +745,7 @@ textarea:disabled {
   flex-direction: column;
   gap: 7px;
   color: #46576d;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 680;
 }
 
@@ -740,14 +758,14 @@ textarea:disabled {
 .field textarea,
 .login-card input {
   width: 100%;
-  min-height: 42px;
+  min-height: 48px;
   border: 1px solid #ccd7e5;
-  border-radius: 9px;
+  border-radius: 10px;
   outline: none;
   background: #fff;
   color: #1e3049;
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: 11px 13px;
+  font-size: 16px;
   font-weight: 450;
   transition:
     border-color 150ms ease,
@@ -755,8 +773,33 @@ textarea:disabled {
 }
 
 .field textarea {
-  min-height: 95px;
+  min-height: 120px;
   resize: vertical;
+}
+
+.field input::placeholder,
+.field textarea::placeholder,
+.login-card input::placeholder {
+  color: #8795a8;
+  opacity: 1;
+}
+
+.field input[type="file"] {
+  height: auto;
+  padding: 9px;
+}
+
+.field input[type="file"]::file-selector-button {
+  min-height: 34px;
+  margin-right: 10px;
+  border: 0;
+  border-radius: 7px;
+  background: #eaf1ff;
+  color: #2457b8;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 680;
 }
 
 .field input:focus,
@@ -779,12 +822,16 @@ textarea:disabled {
   gap: 10px;
   border: 1px solid #d8e1ec;
   border-radius: 10px;
-  padding: 11px;
+  min-height: 48px;
+  padding: 12px;
   color: #405269;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .checkbox-card input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
   accent-color: #2563eb;
 }
 
@@ -796,6 +843,11 @@ textarea:disabled {
   padding: 18px 22px;
 }
 
+.card-body > .field + .button,
+.form-section > .form-grid + .button {
+  margin-top: 16px;
+}
+
 .notice {
   display: flex;
   align-items: flex-start;
@@ -805,8 +857,13 @@ textarea:disabled {
   background: #f1f7ff;
   color: #365b83;
   padding: 12px 14px;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.5;
+}
+
+.notice span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .notice-warn {
@@ -1175,7 +1232,7 @@ textarea:disabled {
 .login-card > p {
   margin: 8px 0 22px;
   color: #708096;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -1198,7 +1255,7 @@ textarea:disabled {
   background: #fff1f1;
   color: #a73c3c;
   padding: 10px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .spin {
@@ -1302,12 +1359,22 @@ textarea:disabled {
   .login-visual {
     min-height: 370px;
   }
+
+  .form-card {
+    max-width: none;
+  }
 }
 
 @media (max-width: 650px) {
+  .main-content {
+    padding: 22px 16px 38px;
+  }
+
   .page-header {
     align-items: stretch;
     flex-direction: column;
+    gap: 18px;
+    margin-bottom: 22px;
   }
 
   .page-header-action .button {
@@ -1329,6 +1396,78 @@ textarea:disabled {
 
   .service-value {
     text-align: left;
+  }
+
+  .card {
+    border-radius: 13px;
+  }
+
+  .card-header {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .card-body,
+  .form-section {
+    padding: 18px 16px;
+  }
+
+  .form-grid {
+    gap: 14px;
+  }
+
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .form-actions .button,
+  .form-actions .notice {
+    width: 100%;
+  }
+
+  .form-actions .notice {
+    justify-content: center;
+  }
+
+  .entity-card {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .entity-actions,
+  .simple-list-item,
+  .financial-row {
+    align-items: flex-start;
+  }
+
+  .simple-list-item {
+    flex-wrap: wrap;
+  }
+
+  .service-hero {
+    gap: 16px;
+    padding: 18px 16px;
+  }
+
+  .service-hero h1 {
+    font-size: 23px;
+    overflow-wrap: anywhere;
+  }
+
+  .kanban {
+    grid-template-columns: repeat(4, minmax(82vw, 1fr));
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+    scroll-snap-type: x proximity;
+  }
+
+  .kanban-column {
+    min-height: 380px;
+    scroll-snap-align: start;
   }
 
   .demo-banner {
@@ -1357,5 +1496,84 @@ textarea:disabled {
 
   .login-card {
     padding: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobile-topbar {
+    padding: 0 14px;
+  }
+
+  .main-content {
+    padding-inline: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+  }
+
+  .page-header p:not(.eyebrow) {
+    font-size: 13px;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .card-header,
+  .card-body,
+  .form-section,
+  .form-actions {
+    padding-inline: 14px;
+  }
+
+  .entity-card-top,
+  .entity-actions {
+    gap: 10px;
+  }
+
+  .entity-actions {
+    flex-wrap: wrap;
+  }
+
+  .entity-actions form,
+  .entity-actions .button {
+    width: 100%;
+  }
+
+  .service-value strong {
+    font-size: 22px;
+  }
+
+  .kanban {
+    grid-template-columns: repeat(4, minmax(88vw, 1fr));
+    margin-inline: -12px;
+    padding-inline: 12px;
+    scroll-padding-inline: 12px;
+  }
+
+  .login-visual {
+    min-height: 280px;
+    padding: 28px 20px;
+  }
+
+  .login-copy h1 {
+    font-size: 34px;
+  }
+
+  .login-copy p {
+    font-size: 14px;
+  }
+
+  .login-panel {
+    padding: 16px 12px 24px;
+  }
+
+  .login-card {
+    padding: 22px 18px;
   }
 }
