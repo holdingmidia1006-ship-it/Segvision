@@ -115,6 +115,11 @@ export function LoginForm({
           ? "É o primeiro acesso? Criar conta"
           : "Já tenho conta"}
       </button>
+      {mode === "login" ? (
+        <Link className="button-link" href="/forgot-password">
+          Esqueci minha senha
+        </Link>
+      ) : null}
     </form>
   );
 }

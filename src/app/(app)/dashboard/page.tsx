@@ -4,6 +4,7 @@ import {
   CircleDollarSign,
   Clock3,
   ReceiptText,
+  CalendarPlus,
   TrendingUp,
   WalletCards,
 } from "lucide-react";
@@ -11,14 +12,22 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge, statusLabel } from "@/components/status-badge";
-import { getDashboardData } from "@/lib/data";
+import { getDashboardData, getVisitMetrics, getVisits } from "@/lib/data";
 import type { ServiceStatus } from "@/lib/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { dateKey, formatCurrency, formatDate, formatTime } from "@/lib/utils";
 
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+  const [data, visitMetrics, visits] = await Promise.all([
+    getDashboardData(),
+    getVisitMetrics(),
+    getVisits(),
+  ]);
+  const today = new Date();
+  const todayVisits = visits.filter(
+    (visit) => dateKey(visit.scheduled_start_at) === dateKey(today),
+  );
   const maxCount = Math.max(...Object.values(data.counts), 1);
   const recent = data.services.slice(0, 5);
 
@@ -65,6 +74,39 @@ export default async function DashboardPage() {
           icon={Clock3}
           tone="red"
         />
+      </section>
+
+      <section className="today-panel card">
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">Hoje</p>
+            <h2>{todayVisits.length ? `${todayVisits.length} visita(s) na agenda` : "Agenda livre"}</h2>
+            <p>
+              {visitMetrics
+                ? `${visitMetrics.scheduled_visits} agendadas e ${visitMetrics.converted_visits} convertidas no período.`
+                : "Organize as próximas visitas comerciais."}
+            </p>
+          </div>
+          <div className="today-actions">
+            <Link className="button button-primary" href="/visits/new?quick=1">
+              <CalendarPlus size={16} /> Nova visita
+            </Link>
+            <Link className="button button-secondary" href="/clients#novo-cliente">
+              Novo cliente
+            </Link>
+          </div>
+        </div>
+        {todayVisits.length ? (
+          <div className="card-body today-visit-list">
+            {todayVisits.map((visit) => (
+              <Link href={`/visits/${visit.id}`} key={visit.id}>
+                <strong>{formatTime(visit.scheduled_start_at)}</strong>
+                <span>{visit.title}</span>
+                <small>{visit.clients?.name}</small>
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section className="dashboard-grid">

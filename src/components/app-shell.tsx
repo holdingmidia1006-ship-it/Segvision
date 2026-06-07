@@ -4,6 +4,7 @@ import {
   BarChart3,
   BookOpenText,
   BriefcaseBusiness,
+  CalendarDays,
   ClipboardList,
   FileText,
   LayoutDashboard,
@@ -24,6 +25,7 @@ import { cn, initials } from "@/lib/utils";
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clientes", icon: Users },
+  { href: "/visits", label: "Visitas", icon: CalendarDays },
   { href: "/team", label: "Equipe", icon: Wrench, adminOnly: true },
   { href: "/services", label: "Serviços", icon: BriefcaseBusiness },
   { href: "/board", label: "Quadro", icon: ClipboardList },

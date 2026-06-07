@@ -4,7 +4,12 @@ import { createServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const redirectTo = request.nextUrl.clone();
-  redirectTo.pathname = "/dashboard";
+  const requestedNext = request.nextUrl.searchParams.get("next");
+  const safeNext =
+    requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/dashboard";
+  redirectTo.pathname = safeNext;
   redirectTo.search = "";
 
   const supabase = await createServerSupabase();

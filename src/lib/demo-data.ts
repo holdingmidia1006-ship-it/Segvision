@@ -6,6 +6,7 @@ import type {
   GeneratedDocument,
   Service,
   ServiceType,
+  Visit,
 } from "@/lib/types";
 
 const now = new Date();
@@ -414,5 +415,56 @@ export const demoDocuments: GeneratedDocument[] = [
       id: "service-2",
       title: "Rede e Wi-Fi do novo escritório",
     },
+  },
+];
+
+export const demoVisits: Visit[] = [
+  {
+    id: "visit-1",
+    client_id: "client-1",
+    client_address_id: "address-1",
+    title: "Levantamento para ampliar o CFTV",
+    status: "CONFIRMADA",
+    priority: "ALTA",
+    scheduled_start_at: isoDaysAhead(1),
+    scheduled_end_at: new Date(
+      new Date(isoDaysAhead(1)).getTime() + 60 * 60 * 1000,
+    ).toISOString(),
+    address_snapshot: "Rua das Palmeiras, 420 - São Paulo/SP",
+    description: "Avaliar novos pontos de câmera no estacionamento.",
+    internal_notes: "Levar medidor e catálogo.",
+    outcome_summary: null,
+    next_action: "Preparar estimativa inicial",
+    created_by: "demo-user",
+    converted_service_id: null,
+    created_at: isoDaysAgo(3),
+    updated_at: isoDaysAgo(1),
+    clients: demoClients[0],
+    visit_assignees: [],
+    visit_attachments: [],
+  },
+  {
+    id: "visit-2",
+    client_id: "client-3",
+    client_address_id: null,
+    title: "Visita para nova rede do estoque",
+    status: "AGENDADA",
+    priority: "MEDIA",
+    scheduled_start_at: isoDaysAhead(3),
+    scheduled_end_at: new Date(
+      new Date(isoDaysAhead(3)).getTime() + 90 * 60 * 1000,
+    ).toISOString(),
+    address_snapshot: "Mercado Santa Clara",
+    description: "Mapear pontos de rede e posição do rack.",
+    internal_notes: null,
+    outcome_summary: null,
+    next_action: null,
+    created_by: "demo-user",
+    converted_service_id: null,
+    created_at: isoDaysAgo(1),
+    updated_at: isoDaysAgo(1),
+    clients: demoClients[2],
+    visit_assignees: [],
+    visit_attachments: [],
   },
 ];

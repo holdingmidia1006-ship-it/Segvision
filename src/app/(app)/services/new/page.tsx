@@ -12,7 +12,12 @@ import {
 
 export const metadata = { title: "Novo orçamento" };
 
-export default async function NewServicePage() {
+export default async function NewServicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string; visit?: string }>;
+}) {
+  const query = await searchParams;
   const [clients, employees, serviceTypes] = await Promise.all([
     getClients(),
     getEmployees(),
@@ -50,7 +55,12 @@ export default async function NewServicePage() {
             </label>
             <label className="field">
               Cliente
-              <select name="client_id" required disabled={demo}>
+              <select
+                name="client_id"
+                defaultValue={query.client ?? ""}
+                required
+                disabled={demo}
+              >
                 <option value="">Selecione</option>
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
@@ -200,6 +210,9 @@ export default async function NewServicePage() {
         </div>
 
         <div className="form-actions">
+          {query.visit ? (
+            <input type="hidden" name="origin_visit_id" value={query.visit} />
+          ) : null}
           {demo ? (
             <span className="notice">Conecte o Supabase para criar serviços.</span>
           ) : null}

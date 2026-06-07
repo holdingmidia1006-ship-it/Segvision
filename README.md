@@ -24,6 +24,11 @@ orçamentos, serviços, custos reais, documentos e preparação fiscal.
 - Template Word privado no Supabase Storage
 - Dashboard operacional e financeiro
 - Fiscal assistido com anexos XML/PDF
+- Agenda de visitas com visões mensal, semanal e diária
+- Cadastro relâmpago de lead e visita
+- Conversão de visita em orçamento com rastreabilidade
+- Histórico cronológico completo do cliente
+- Recuperação e redefinição de senha
 
 ## Rodar localmente
 
@@ -40,6 +45,7 @@ Sem variáveis do Supabase, o app abre em modo de demonstração somente leitura
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 Use apenas a chave publicável no navegador. Não adicione `service_role` ao app.
@@ -68,6 +74,9 @@ A migration inicial está em `supabase/migrations`. Ela cria:
 
 No Supabase Auth, inclua os endereços local e de produção em **Redirect
 URLs**, ambos com o caminho `/auth/confirm`.
+
+A arquitetura, os fluxos e o checklist manual do módulo estão em
+[`VISITS.md`](VISITS.md).
 
 Para aplicar em um projeto já vinculado:
 

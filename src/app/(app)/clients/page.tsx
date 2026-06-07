@@ -7,6 +7,7 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
+import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
@@ -99,6 +100,12 @@ export default async function ClientsPage({
                       </button>
                     </form>
                   ) : null}
+                  <Link
+                    className="button button-secondary button-small"
+                    href={`/clients/${client.id}`}
+                  >
+                    Ver histórico
+                  </Link>
                 </div>
               </article>
             );

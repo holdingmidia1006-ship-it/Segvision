@@ -71,11 +71,16 @@ export async function createClient(formData: FormData) {
     notes: optionalText,
   });
   const input = schema.parse(Object.fromEntries(formData));
-  const { supabase } = await requireSession();
+  const { supabase, user } = await requireSession();
 
   const { data: client, error } = await supabase
     .from("clients")
-    .insert(input)
+    .insert({
+      ...input,
+      record_type: String(formData.get("record_type") ?? "CLIENTE"),
+      source: optionalText.parse(formData.get("source")),
+      created_by: user.id,
+    })
     .select("id")
     .single();
   if (error) throw error;
@@ -151,6 +156,8 @@ export async function createService(formData: FormData) {
     estimated_start_at:
       String(formData.get("estimated_start_at") ?? "") || null,
     estimated_end_at: String(formData.get("estimated_end_at") ?? "") || null,
+    origin_visit_id:
+      z.string().uuid().safeParse(formData.get("origin_visit_id")).data ?? null,
   };
   const { supabase, user } = await requireSession();
   const { data: service, error } = await supabase
@@ -203,6 +210,249 @@ export async function createService(formData: FormData) {
   revalidatePath("/services");
   revalidatePath("/dashboard");
   redirect(`/services/${service.id}?created=1`);
+}
+
+function visitDateTime(date: FormDataEntryValue | null, time: FormDataEntryValue | null) {
+  const value = `${String(date ?? "")}T${String(time ?? "09:00")}:00-03:00`;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) throw new Error("Data da visita inválida.");
+  return parsed;
+}
+
+function zonedDateTime(value: FormDataEntryValue | null) {
+  const text = String(value ?? "");
+  return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(text) ? text : `${text}:00-03:00`);
+}
+
+export async function createQuickVisit(formData: FormData) {
+  const { supabase, user } = await requireSession();
+  const name = requiredText.parse(formData.get("client_name"));
+  const phone = optionalText.parse(formData.get("phone"));
+  const address = requiredText.parse(formData.get("address"));
+  const start = visitDateTime(formData.get("date"), formData.get("time"));
+  const duration = Math.max(30, numberValue(formData.get("duration")) || 60);
+  const end = new Date(start.getTime() + duration * 60000);
+
+  let clientId = z.string().uuid().safeParse(formData.get("client_id")).data;
+  if (!clientId) {
+    let query = supabase.from("clients").select("id").limit(1);
+    query = phone ? query.eq("phone", phone) : query.ilike("name", name);
+    const { data: existing } = await query.maybeSingle();
+    clientId = existing?.id;
+  }
+  if (!clientId) {
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .insert({
+        name,
+        phone,
+        person_type: "PF",
+        record_type: "LEAD",
+        source: "Visita rápida",
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    if (clientError) throw clientError;
+    clientId = client.id;
+  }
+
+  const { data: visit, error } = await supabase
+    .from("visits")
+    .insert({
+      client_id: clientId,
+      title:
+        optionalText.parse(formData.get("title")) ??
+        `Visita para ${name}`,
+      status: "AGENDADA",
+      priority: z
+        .enum(["BAIXA", "MEDIA", "ALTA"])
+        .catch("MEDIA")
+        .parse(formData.get("priority")),
+      scheduled_start_at: start.toISOString(),
+      scheduled_end_at: end.toISOString(),
+      address_snapshot: address,
+      description: optionalText.parse(formData.get("description")),
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  revalidatePath("/visits");
+  revalidatePath("/dashboard");
+  revalidatePath(`/clients/${clientId}`);
+  redirect(`/visits/${visit.id}?created=1`);
+}
+
+export async function createVisit(formData: FormData) {
+  const { supabase, user } = await requireSession();
+  requiredText.parse(formData.get("scheduled_start_at"));
+  requiredText.parse(formData.get("scheduled_end_at"));
+  const start = zonedDateTime(formData.get("scheduled_start_at"));
+  const end = zonedDateTime(formData.get("scheduled_end_at"));
+  const { data: visit, error } = await supabase
+    .from("visits")
+    .insert({
+      client_id: z.string().uuid().parse(formData.get("client_id")),
+      client_address_id:
+        z.string().uuid().safeParse(formData.get("client_address_id")).data ??
+        null,
+      title: requiredText.parse(formData.get("title")),
+      status: z
+        .enum(["AGENDADA", "CONFIRMADA"])
+        .catch("AGENDADA")
+        .parse(formData.get("status")),
+      priority: z
+        .enum(["BAIXA", "MEDIA", "ALTA"])
+        .catch("MEDIA")
+        .parse(formData.get("priority")),
+      scheduled_start_at: start.toISOString(),
+      scheduled_end_at: end.toISOString(),
+      address_snapshot: optionalText.parse(formData.get("address_snapshot")),
+      description: optionalText.parse(formData.get("description")),
+      internal_notes: optionalText.parse(formData.get("internal_notes")),
+      next_action: optionalText.parse(formData.get("next_action")),
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const assigneeIds = formData
+    .getAll("assignee_ids")
+    .map(String)
+    .filter((profileId) => profileId && profileId !== user.id);
+  if (assigneeIds.length) {
+    const { error: assigneeError } = await supabase
+      .from("visit_assignees")
+      .insert(
+        assigneeIds.map((profileId) => ({
+          visit_id: visit.id,
+          profile_id: profileId,
+          role_on_visit: "TECNICO",
+        })),
+      );
+    if (assigneeError) throw assigneeError;
+  }
+  revalidatePath("/visits");
+  revalidatePath("/dashboard");
+  redirect(`/visits/${visit.id}?created=1`);
+}
+
+export async function updateVisit(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const status = z
+    .enum([
+      "AGENDADA",
+      "CONFIRMADA",
+      "CONCLUIDA",
+      "CONVERTIDA_ORCAMENTO",
+      "CANCELADA",
+    ])
+    .parse(formData.get("status"));
+  const { supabase } = await requireSession();
+  const update: Record<string, unknown> = {
+    title: requiredText.parse(formData.get("title")),
+    status,
+    priority: z
+      .enum(["BAIXA", "MEDIA", "ALTA"])
+      .parse(formData.get("priority")),
+    address_snapshot: optionalText.parse(formData.get("address_snapshot")),
+    description: optionalText.parse(formData.get("description")),
+    outcome_summary: optionalText.parse(formData.get("outcome_summary")),
+    next_action: optionalText.parse(formData.get("next_action")),
+    internal_notes: optionalText.parse(formData.get("internal_notes")),
+  };
+  const start = String(formData.get("scheduled_start_at") ?? "");
+  const end = String(formData.get("scheduled_end_at") ?? "");
+  if (start) update.scheduled_start_at = zonedDateTime(start).toISOString();
+  if (end) update.scheduled_end_at = zonedDateTime(end).toISOString();
+  const { error } = await supabase.from("visits").update(update).eq("id", id);
+  if (error) throw error;
+  revalidatePath(`/visits/${id}`);
+  revalidatePath("/visits");
+  revalidatePath("/dashboard");
+}
+
+export async function convertVisitToService(formData: FormData) {
+  const visitId = z.string().uuid().parse(formData.get("visit_id"));
+  const { supabase, user } = await requireSession();
+  const { data: visit, error: visitError } = await supabase
+    .from("visits")
+    .select("id,client_id,title,description,internal_notes,scheduled_start_at,converted_service_id")
+    .eq("id", visitId)
+    .single();
+  if (visitError) throw visitError;
+  if (visit.converted_service_id) redirect(`/services/${visit.converted_service_id}`);
+
+  const { data: service, error } = await supabase
+    .from("services")
+    .insert({
+      client_id: visit.client_id,
+      title: `Orçamento - ${visit.title}`,
+      description: visit.description,
+      internal_notes: visit.internal_notes,
+      estimated_start_at: visit.scheduled_start_at,
+      status: "ORCAMENTO",
+      origin_visit_id: visit.id,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const { error: updateError } = await supabase
+    .from("visits")
+    .update({
+      status: "CONVERTIDA_ORCAMENTO",
+      converted_service_id: service.id,
+    })
+    .eq("id", visit.id);
+  if (updateError) throw updateError;
+  revalidatePath("/visits");
+  revalidatePath("/services");
+  revalidatePath("/dashboard");
+  redirect(`/services/${service.id}?created=1`);
+}
+
+export async function addClientNote(formData: FormData) {
+  const clientId = z.string().uuid().parse(formData.get("client_id"));
+  const { supabase, user } = await requireSession();
+  const { error } = await supabase.from("client_notes").insert({
+    client_id: clientId,
+    visit_id:
+      z.string().uuid().safeParse(formData.get("visit_id")).data ?? null,
+    note_type: z
+      .enum(["MANUAL", "COMERCIAL", "TECNICA"])
+      .catch("MANUAL")
+      .parse(formData.get("note_type")),
+    content: requiredText.parse(formData.get("content")),
+    created_by: user.id,
+  });
+  if (error) throw error;
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function uploadVisitAttachment(formData: FormData) {
+  const visitId = z.string().uuid().parse(formData.get("visit_id"));
+  const clientId = z.string().uuid().parse(formData.get("client_id"));
+  const file = formData.get("attachment");
+  if (!(file instanceof File) || !file.size) throw new Error("Selecione um arquivo.");
+  const { supabase, user } = await requireSession();
+  const path = `${visitId}/${Date.now()}-${safeFileName(file.name)}`;
+  const { error: uploadError } = await supabase.storage
+    .from("visit-attachments")
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError) throw uploadError;
+  const { error } = await supabase.from("visit_attachments").insert({
+    visit_id: visitId,
+    client_id: clientId,
+    storage_path: path,
+    file_name: file.name,
+    mime_type: file.type || null,
+    uploaded_by: user.id,
+  });
+  if (error) throw error;
+  revalidatePath(`/visits/${visitId}`);
 }
 
 export async function updateServiceStatus(formData: FormData) {
