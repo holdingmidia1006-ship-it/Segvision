@@ -3366,6 +3366,24 @@ textarea:disabled {
   color: var(--danger);
 }
 
+:root[data-theme="dark"] .field,
+:root[data-theme="dark"] .login-card label {
+  color: #c2d2e6;
+}
+
+:root[data-theme="dark"] .field > small {
+  color: #9eb0c7;
+}
+
+:root[data-theme="dark"] .kanban-card h3 {
+  color: var(--heading);
+}
+
+:root[data-theme="dark"] .kanban-card p,
+:root[data-theme="dark"] .kanban-card-footer {
+  color: var(--muted);
+}
+
 /* Final responsive overrides: operational views never scroll horizontally. */
 
 .kanban-tabs {
