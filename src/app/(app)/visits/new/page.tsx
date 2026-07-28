@@ -1,4 +1,4 @@
-import { ArrowLeft, Zap } from "lucide-react";
+import { ArrowLeft, Settings2, Zap } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
@@ -13,7 +13,7 @@ export default async function NewVisitPage({
   searchParams: Promise<{ quick?: string; client?: string }>;
 }) {
   const query = await searchParams;
-  const quick = query.quick === "1";
+  const quick = query.quick !== "0";
   const [clients, profiles] = await Promise.all([
     getClients(),
     getActiveProfiles(),
@@ -23,12 +23,12 @@ export default async function NewVisitPage({
   return (
     <>
       <PageHeader
-        eyebrow="Agenda"
-        title={quick ? "Cadastro relâmpago" : "Nova visita"}
+        eyebrow="Passo 2"
+        title={quick ? "Agendar visita" : "Visita completa"}
         description={
           quick
-            ? "Preencha apenas o essencial. O restante pode ser completado depois."
-            : "Agende a visita com cliente, período e orientações para a equipe."
+            ? "Informe cliente, local e horário. Leva menos de um minuto."
+            : "Use esta versão somente quando precisar planejar a equipe em detalhes."
         }
         action={
           <Link className="button button-secondary" href="/visits">
@@ -42,9 +42,11 @@ export default async function NewVisitPage({
         <form className="card form-card" action={createQuickVisit}>
           <div className="form-section">
             <h2>
-              <Zap size={19} /> Dados essenciais
+              <Zap size={19} /> Só o necessário
             </h2>
             <p>Se o telefone ou nome já existir, o cliente será reutilizado.</p>
+            <input type="hidden" name="duration" value="60" />
+            <input type="hidden" name="priority" value="MEDIA" />
             <div className="form-grid">
               <label className="field">
                 Nome do cliente
@@ -56,7 +58,12 @@ export default async function NewVisitPage({
               </label>
               <label className="field field-full">
                 Endereço da visita
-                <input name="address" required disabled={demo} />
+                <input
+                  name="address"
+                  required
+                  placeholder="Rua, número, bairro e cidade"
+                  disabled={demo}
+                />
               </label>
               <label className="field">
                 Data
@@ -64,39 +71,46 @@ export default async function NewVisitPage({
               </label>
               <label className="field">
                 Hora
-                <input name="time" type="time" defaultValue="09:00" required disabled={demo} />
-              </label>
-              <label className="field">
-                Duração em minutos
-                <input name="duration" type="number" min="30" step="30" defaultValue="60" disabled={demo} />
-              </label>
-              <label className="field">
-                Prioridade
-                <select name="priority" defaultValue="MEDIA" disabled={demo}>
-                  <option value="BAIXA">Baixa</option>
-                  <option value="MEDIA">Média</option>
-                  <option value="ALTA">Alta</option>
-                </select>
+                <input
+                  name="time"
+                  type="time"
+                  defaultValue="09:00"
+                  required
+                  disabled={demo}
+                />
               </label>
               <label className="field field-full">
-                Observação curta
-                <textarea name="description" disabled={demo} />
+                O que será avaliado?
+                <textarea
+                  name="description"
+                  placeholder="Ex.: verificar pontos para instalar câmeras"
+                  disabled={demo}
+                />
               </label>
             </div>
           </div>
-          <div className="form-actions">
+          <div className="form-actions form-actions-between">
+            <Link className="form-helper-link" href="/visits/new?quick=0">
+              <Settings2 size={16} />
+              Preciso de opções avançadas
+            </Link>
             <SubmitButton disabled={demo}>Agendar visita</SubmitButton>
           </div>
         </form>
       ) : (
         <form className="card form-card" action={createVisit}>
           <div className="form-section">
-            <h2>Cliente e agenda</h2>
-            <p>Os campos de cliente, título e período são obrigatórios.</p>
+            <h2>Cliente e horário</h2>
+            <p>A plataforma usará automaticamente o endereço principal do cliente.</p>
             <div className="form-grid">
               <label className="field">
                 Cliente
-                <select name="client_id" defaultValue={query.client ?? ""} required disabled={demo}>
+                <select
+                  name="client_id"
+                  defaultValue={query.client ?? ""}
+                  required
+                  disabled={demo}
+                >
                   <option value="">Selecione</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
@@ -106,67 +120,99 @@ export default async function NewVisitPage({
                 </select>
               </label>
               <label className="field">
-                Status inicial
-                <select name="status" defaultValue="AGENDADA" disabled={demo}>
-                  <option value="AGENDADA">Agendada</option>
-                  <option value="CONFIRMADA">Confirmada</option>
-                </select>
-              </label>
-              <label className="field field-full">
                 Título
-                <input name="title" required placeholder="Ex.: Levantamento para instalação de câmeras" disabled={demo} />
+                <input
+                  name="title"
+                  required
+                  placeholder="Ex.: Visita para instalação de câmeras"
+                  disabled={demo}
+                />
               </label>
               <label className="field">
                 Início
-                <input name="scheduled_start_at" type="datetime-local" required disabled={demo} />
+                <input
+                  name="scheduled_start_at"
+                  type="datetime-local"
+                  required
+                  disabled={demo}
+                />
               </label>
               <label className="field">
                 Fim
-                <input name="scheduled_end_at" type="datetime-local" required disabled={demo} />
+                <input
+                  name="scheduled_end_at"
+                  type="datetime-local"
+                  required
+                  disabled={demo}
+                />
               </label>
-              <label className="field">
-                Prioridade
-                <select name="priority" defaultValue="MEDIA" disabled={demo}>
-                  <option value="BAIXA">Baixa</option>
-                  <option value="MEDIA">Média</option>
-                  <option value="ALTA">Alta</option>
-                </select>
-              </label>
-              <label className="field">
-                Endereço
-                <input name="address_snapshot" disabled={demo} />
-              </label>
-              <div className="field field-full">
-                Responsáveis
-                <div className="checkbox-grid">
-                  {profiles.map((profile) => (
-                    <label className="checkbox-card" key={profile.id}>
-                      <input
-                        type="checkbox"
-                        name="assignee_ids"
-                        value={profile.id}
-                        disabled={demo}
-                      />
-                      <span>{profile.full_name || "Usuário interno"}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
               <label className="field field-full">
                 O que deve ser avaliado?
                 <textarea name="description" disabled={demo} />
               </label>
-              <label className="field">
-                Orientações internas
-                <textarea name="internal_notes" disabled={demo} />
-              </label>
-              <label className="field">
-                Próxima ação esperada
-                <textarea name="next_action" disabled={demo} />
-              </label>
             </div>
           </div>
-          <div className="form-actions">
+
+          <details className="form-disclosure">
+            <summary>
+              <span>
+                Planejamento avançado
+                <small>Equipe, prioridade, local diferente e notas internas</small>
+              </span>
+            </summary>
+            <div className="form-section">
+              <div className="form-grid">
+                <label className="field">
+                  Status inicial
+                  <select name="status" defaultValue="AGENDADA" disabled={demo}>
+                    <option value="AGENDADA">Agendada</option>
+                    <option value="CONFIRMADA">Confirmada</option>
+                  </select>
+                </label>
+                <label className="field">
+                  Prioridade
+                  <select name="priority" defaultValue="MEDIA" disabled={demo}>
+                    <option value="BAIXA">Baixa</option>
+                    <option value="MEDIA">Média</option>
+                    <option value="ALTA">Alta</option>
+                  </select>
+                </label>
+                <label className="field field-full">
+                  Local diferente do endereço principal
+                  <input name="address_snapshot" disabled={demo} />
+                </label>
+                <div className="field field-full">
+                  Responsáveis
+                  <div className="checkbox-grid">
+                    {profiles.map((profile) => (
+                      <label className="checkbox-card" key={profile.id}>
+                        <input
+                          type="checkbox"
+                          name="assignee_ids"
+                          value={profile.id}
+                          disabled={demo}
+                        />
+                        <span>{profile.full_name || "Usuário interno"}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <label className="field">
+                  Orientações internas
+                  <textarea name="internal_notes" disabled={demo} />
+                </label>
+                <label className="field">
+                  Próxima ação esperada
+                  <textarea name="next_action" disabled={demo} />
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <div className="form-actions form-actions-between">
+            <Link className="form-helper-link" href="/visits/new">
+              Usar cadastro rápido
+            </Link>
             <SubmitButton disabled={demo}>Salvar visita</SubmitButton>
           </div>
         </form>

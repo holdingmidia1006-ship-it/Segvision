@@ -7,7 +7,7 @@ import { getServices } from "@/lib/data";
 import type { ServiceStatus } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-export const metadata = { title: "Serviços" };
+export const metadata = { title: "Orçamentos" };
 
 export default async function ServicesPage({
   searchParams,
@@ -29,9 +29,9 @@ export default async function ServicesPage({
   return (
     <>
       <PageHeader
-        eyebrow="Operação"
-        title="Serviços"
-        description="Cada registro nasce como orçamento e continua vivo até a execução, garantia e finalização."
+        eyebrow="Passo 3"
+        title="Orçamentos"
+        description="Crie, envie e acompanhe a aprovação. O mesmo registro continua durante a execução."
         action={
           <Link className="button button-primary" href="/services/new">
             <Plus size={16} />

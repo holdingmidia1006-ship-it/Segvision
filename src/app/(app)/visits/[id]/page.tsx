@@ -135,15 +135,18 @@ export default async function VisitDetailPage({
                 </div>
               ))}
               {!visit.visit_attachments?.length ? <span className="cell-subtitle">Nenhum anexo enviado.</span> : null}
-              <form action={uploadVisitAttachment} className="inline-upload">
-                <input type="hidden" name="visit_id" value={visit.id} />
-                <input type="hidden" name="client_id" value={visit.client_id} />
-                <label className="field">
-                  Novo arquivo
-                  <input name="attachment" type="file" required disabled={demo} />
-                </label>
-                <SubmitButton disabled={demo}>Enviar anexo</SubmitButton>
-              </form>
+              <details className="inline-disclosure">
+                <summary>Enviar novo anexo</summary>
+                <form action={uploadVisitAttachment} className="inline-upload">
+                  <input type="hidden" name="visit_id" value={visit.id} />
+                  <input type="hidden" name="client_id" value={visit.client_id} />
+                  <label className="field">
+                    Novo arquivo
+                    <input name="attachment" type="file" required disabled={demo} />
+                  </label>
+                  <SubmitButton disabled={demo}>Enviar anexo</SubmitButton>
+                </form>
+              </details>
             </div>
           </article>
         </div>
@@ -156,7 +159,9 @@ export default async function VisitDetailPage({
                 <p>Conclua, reagende ou cancele.</p>
               </div>
             </div>
-            <form className="card-body" action={updateVisit}>
+            <details className="card-disclosure">
+              <summary>Editar ou concluir visita</summary>
+              <form className="card-body" action={updateVisit}>
               <input type="hidden" name="id" value={visit.id} />
               <div className="form-grid single-column">
                 <label className="field">
@@ -211,7 +216,8 @@ export default async function VisitDetailPage({
                 </label>
               </div>
               <SubmitButton className="button-full" disabled={demo}>Salvar alterações</SubmitButton>
-            </form>
+              </form>
+            </details>
           </article>
 
           <article className="card">
@@ -254,7 +260,9 @@ export default async function VisitDetailPage({
                 <p>Também aparecerá na linha do tempo.</p>
               </div>
             </div>
-            <form className="card-body" action={addClientNote}>
+            <details className="card-disclosure">
+              <summary>Adicionar observação</summary>
+              <form className="card-body" action={addClientNote}>
               <input type="hidden" name="client_id" value={visit.client_id} />
               <input type="hidden" name="visit_id" value={visit.id} />
               <label className="field">
@@ -270,7 +278,8 @@ export default async function VisitDetailPage({
                 <textarea name="content" required disabled={demo} />
               </label>
               <SubmitButton className="button-full" disabled={demo}>Registrar</SubmitButton>
-            </form>
+              </form>
+            </details>
           </article>
         </aside>
       </section>

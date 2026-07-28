@@ -98,7 +98,7 @@ export async function createClient(formData: FormData) {
         complement: String(formData.get("complement") ?? "") || null,
         district: String(formData.get("district") ?? "") || null,
         city,
-        state: String(formData.get("state") ?? "SP").toUpperCase(),
+        state: String(formData.get("state") ?? "GO").toUpperCase(),
         postal_code: String(formData.get("postal_code") ?? "") || null,
         is_primary: true,
       });
@@ -143,6 +143,17 @@ export async function deleteEmployee(formData: FormData) {
 }
 
 export async function createService(formData: FormData) {
+  const itemDescription = requiredText.parse(formData.get("item_description"));
+  const quantity = z
+    .number()
+    .positive()
+    .parse(numberValue(formData.get("item_quantity")));
+  const unitPrice = z
+    .number()
+    .nonnegative()
+    .parse(numberValue(formData.get("item_unit_price")));
+  const manualSaleAmount = numberValue(formData.get("sale_amount"));
+  const calculatedSaleAmount = quantity * unitPrice;
   const input = {
     title: requiredText.parse(formData.get("title")),
     client_id: z.string().uuid().parse(formData.get("client_id")),
@@ -156,7 +167,7 @@ export async function createService(formData: FormData) {
     sale_amount: z
       .number()
       .positive()
-      .parse(numberValue(formData.get("sale_amount"))),
+      .parse(manualSaleAmount > 0 ? manualSaleAmount : calculatedSaleAmount),
     discount_amount: z
       .number()
       .nonnegative()
@@ -185,7 +196,17 @@ export async function createService(formData: FormData) {
       "O desconto não pode superar o valor de venda somado ao acréscimo.",
     );
   }
-  if (input.client_address_id) {
+  if (!input.client_address_id) {
+    const { data: primaryAddress, error: primaryAddressError } = await supabase
+      .from("client_addresses")
+      .select("id")
+      .eq("client_id", input.client_id)
+      .order("is_primary", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (primaryAddressError) throw primaryAddressError;
+    input.client_address_id = primaryAddress?.id ?? null;
+  } else {
     const { data: address, error: addressError } = await supabase
       .from("client_addresses")
       .select("id")
@@ -197,15 +218,6 @@ export async function createService(formData: FormData) {
       throw new Error("O endereço selecionado não pertence ao cliente.");
     }
   }
-  const itemDescription = requiredText.parse(formData.get("item_description"));
-  const quantity = z
-    .number()
-    .positive()
-    .parse(numberValue(formData.get("item_quantity")));
-  const unitPrice = z
-    .number()
-    .nonnegative()
-    .parse(numberValue(formData.get("item_unit_price")));
   const { data: service, error } = await supabase
     .from("services")
     .insert({ ...input, created_by: user.id })
@@ -335,13 +347,42 @@ export async function createVisit(formData: FormData) {
   requiredText.parse(formData.get("scheduled_end_at"));
   const start = zonedDateTime(formData.get("scheduled_start_at"));
   const end = zonedDateTime(formData.get("scheduled_end_at"));
+  const clientId = z.string().uuid().parse(formData.get("client_id"));
+  let clientAddressId =
+    z.string().uuid().safeParse(formData.get("client_address_id")).data ?? null;
+  let addressSnapshot = optionalText.parse(formData.get("address_snapshot"));
+
+  if (!addressSnapshot || !clientAddressId) {
+    let addressQuery = supabase
+      .from("client_addresses")
+      .select("id,street,number,complement,district,city,state,postal_code")
+      .eq("client_id", clientId);
+    addressQuery = clientAddressId
+      ? addressQuery.eq("id", clientAddressId)
+      : addressQuery.order("is_primary", { ascending: false }).limit(1);
+    const { data: address, error: addressError } =
+      await addressQuery.maybeSingle();
+    if (addressError) throw addressError;
+    if (address) {
+      clientAddressId = address.id;
+      addressSnapshot ??= [
+        address.street,
+        address.number,
+        address.complement,
+        address.district,
+        `${address.city}/${address.state}`,
+        address.postal_code,
+      ]
+        .filter(Boolean)
+        .join(", ");
+    }
+  }
+
   const { data: visit, error } = await supabase
     .from("visits")
     .insert({
-      client_id: z.string().uuid().parse(formData.get("client_id")),
-      client_address_id:
-        z.string().uuid().safeParse(formData.get("client_address_id")).data ??
-        null,
+      client_id: clientId,
+      client_address_id: clientAddressId,
       title: requiredText.parse(formData.get("title")),
       status: z
         .enum(["AGENDADA", "CONFIRMADA"])
@@ -353,7 +394,7 @@ export async function createVisit(formData: FormData) {
         .parse(formData.get("priority")),
       scheduled_start_at: start.toISOString(),
       scheduled_end_at: end.toISOString(),
-      address_snapshot: optionalText.parse(formData.get("address_snapshot")),
+      address_snapshot: addressSnapshot,
       description: optionalText.parse(formData.get("description")),
       internal_notes: optionalText.parse(formData.get("internal_notes")),
       next_action: optionalText.parse(formData.get("next_action")),

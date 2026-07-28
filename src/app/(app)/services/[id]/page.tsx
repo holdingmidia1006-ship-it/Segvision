@@ -170,11 +170,9 @@ export default async function ServiceDetailPage({
                   Nenhum item detalhado neste serviço.
                 </span>
               )}
-              <form
-                action={addServiceItem}
-                className="form-grid"
-                style={{ marginTop: 20 }}
-              >
+              <details className="inline-disclosure">
+                <summary>Adicionar outro item</summary>
+                <form action={addServiceItem} className="form-grid">
                 <input type="hidden" name="service_id" value={service.id} />
                 <label className="field field-full">
                   Novo item
@@ -219,7 +217,8 @@ export default async function ServiceDetailPage({
                   />
                 </label>
                 <SubmitButton disabled={demo}>Adicionar item</SubmitButton>
-              </form>
+                </form>
+              </details>
             </div>
           </article>
 
@@ -297,7 +296,9 @@ export default async function ServiceDetailPage({
                 <p>Estes valores e textos alimentam o PDF.</p>
               </div>
             </div>
-            <form className="card-body" action={updateServiceCommercialTerms}>
+            <details className="card-disclosure">
+              <summary>Editar condições do PDF</summary>
+              <form className="card-body" action={updateServiceCommercialTerms}>
               <input type="hidden" name="service_id" value={service.id} />
               <div className="form-grid" style={{ gridTemplateColumns: "1fr" }}>
                 <label className="field">
@@ -381,7 +382,8 @@ export default async function ServiceDetailPage({
               <SubmitButton className="button-full" disabled={demo}>
                 Salvar e criar nova versão
               </SubmitButton>
-            </form>
+              </form>
+            </details>
           </article>
 
           <article className="card">
@@ -431,7 +433,9 @@ export default async function ServiceDetailPage({
               </div>
               <PlusCircle size={19} color="#60758f" />
             </div>
-            <form className="card-body" action={addServiceCost}>
+            <details className="card-disclosure">
+              <summary>Lançar novo custo</summary>
+              <form className="card-body" action={addServiceCost}>
               <input type="hidden" name="service_id" value={service.id} />
               <div className="form-grid" style={{ gridTemplateColumns: "1fr" }}>
                 <label className="field">
@@ -487,7 +491,8 @@ export default async function ServiceDetailPage({
               <SubmitButton className="button-full" disabled={demo}>
                 Lançar custo
               </SubmitButton>
-            </form>
+              </form>
+            </details>
           </article>
 
           <article className="card">

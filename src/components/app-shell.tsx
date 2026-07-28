@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BookOpenText,
   BriefcaseBusiness,
   CalendarDays,
   ClipboardList,
@@ -9,28 +8,41 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MoreHorizontal,
   ReceiptText,
   Settings,
   Users,
   Wrench,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { signOut } from "@/lib/actions";
 import { cn, initials } from "@/lib/utils";
 
-const navigation = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+type NavigationItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  adminOnly?: boolean;
+};
+
+const primaryNavigation: NavigationItem[] = [
+  { href: "/dashboard", label: "Início", icon: LayoutDashboard },
   { href: "/clients", label: "Clientes", icon: Users },
-  { href: "/visits", label: "Visitas", icon: CalendarDays },
-  { href: "/team", label: "Equipe", icon: Wrench, adminOnly: true },
-  { href: "/services", label: "Serviços", icon: BriefcaseBusiness },
-  { href: "/board", label: "Quadro", icon: ClipboardList },
+  { href: "/visits", label: "Agenda", icon: CalendarDays },
+  { href: "/services", label: "Orçamentos", icon: BriefcaseBusiness },
+];
+
+const secondaryNavigation: NavigationItem[] = [
+  { href: "/board", label: "Quadro de execução", icon: ClipboardList },
   { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/invoices", label: "Notas", icon: ReceiptText },
+  { href: "/invoices", label: "Notas fiscais", icon: ReceiptText },
+  { href: "/team", label: "Equipe", icon: Wrench, adminOnly: true },
   {
     href: "/settings",
     label: "Configurações",
@@ -53,6 +65,31 @@ export function AppShell({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const displayName = userEmail?.split("@")[0] || "Administrador";
+  const visibleSecondaryNavigation = secondaryNavigation.filter(
+    (item) => !item.adminOnly || demo || role === "ADMIN",
+  );
+  const secondaryActive = visibleSecondaryNavigation.some(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  );
+
+  function navigationLink(item: NavigationItem) {
+    const Icon = item.icon;
+    const active =
+      pathname === item.href ||
+      (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn("nav-link", active && "nav-link-active")}
+        onClick={() => setOpen(false)}
+      >
+        <Icon aria-hidden="true" size={19} />
+        <span>{item.label}</span>
+      </Link>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -88,33 +125,24 @@ export function AppShell({
         </div>
 
         <nav className="main-nav" aria-label="Menu principal">
-          <p>OPERAÇÃO</p>
-          {navigation
-            .filter((item) => !item.adminOnly || demo || role === "ADMIN")
-            .map((item) => {
-              const Icon = item.icon;
-              const active =
-                pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn("nav-link", active && "nav-link-active")}
-                  onClick={() => setOpen(false)}
-                >
-                  <Icon aria-hidden="true" size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <p>FLUXO PRINCIPAL</p>
+          {primaryNavigation.map(navigationLink)}
+
+          <details className="secondary-nav" open={secondaryActive}>
+            <summary>
+              <MoreHorizontal aria-hidden="true" size={19} />
+              <span>Mais opções</span>
+            </summary>
+            <div>{visibleSecondaryNavigation.map(navigationLink)}</div>
+          </details>
         </nav>
 
         <div className="sidebar-help">
-          <BookOpenText aria-hidden="true" size={20} />
-          <strong>Operação conectada</strong>
-          <span>Segurança, energia e conectividade do orçamento à entrega.</span>
+          <strong>Por onde começar?</strong>
+          <span>Cadastre o cliente, agende a visita e crie o orçamento.</span>
         </div>
+
+        <ThemeToggle />
 
         <div className="user-card">
           <div className="avatar">{initials(displayName)}</div>
@@ -161,6 +189,7 @@ export function AppShell({
             <BrandLogo decorative variant="symbol" />
             <strong>SEG VISIOM</strong>
           </Link>
+          <ThemeToggle iconOnly />
         </div>
         {demo ? (
           <div className="demo-banner">
@@ -169,6 +198,25 @@ export function AppShell({
           </div>
         ) : null}
         <main className="main-content">{children}</main>
+        <nav className="mobile-bottom-nav" aria-label="Navegação rápida">
+          {primaryNavigation.map((item) => {
+            const Icon = item.icon;
+            const active =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(active && "active")}
+              >
+                <Icon aria-hidden="true" size={20} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );

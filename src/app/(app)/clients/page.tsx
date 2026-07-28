@@ -30,9 +30,9 @@ export default async function ClientsPage({
   return (
     <>
       <PageHeader
-        eyebrow="Cadastros"
+        eyebrow="Passo 1"
         title="Clientes"
-        description="Centralize contatos e endereços de obra para não preencher as mesmas informações em cada orçamento."
+        description="Cadastre o contato uma vez. Os dados serão reaproveitados nas visitas e nos orçamentos."
         action={
           <a className="button button-primary" href="#novo-cliente">
             <Plus size={16} />
@@ -104,7 +104,7 @@ export default async function ClientsPage({
                     className="button button-secondary button-small"
                     href={`/clients/${client.id}`}
                   >
-                    Ver histórico
+                    Abrir cliente
                   </Link>
                 </div>
               </article>
@@ -114,8 +114,8 @@ export default async function ClientsPage({
       ) : (
         <article className="card">
           <EmptyState
-            title="Nenhum cliente cadastrado ainda"
-            description="Cadastre o primeiro cliente para criar orçamentos e acompanhar os serviços."
+            title="Nenhum cliente cadastrado"
+            description="Comece pelo nome e telefone. Os demais dados são opcionais."
           />
         </article>
       )}
@@ -128,79 +128,87 @@ export default async function ClientsPage({
       >
         <div className="form-section">
           <h2>Novo cliente</h2>
-          <p>Dados usados nos serviços, documentos e notas preparadas.</p>
+          <p>Para começar, informe apenas quem é o cliente e como falar com ele.</p>
           <div className="form-grid">
-            <label className="field">
+            <label className="field field-full">
               Nome completo ou razão social
               <input name="name" required minLength={2} disabled={demo} />
             </label>
             <label className="field">
-              Tipo de pessoa
+              Telefone / WhatsApp
+              <input name="phone" type="tel" disabled={demo} />
+            </label>
+            <label className="field">
+              Tipo
               <select name="person_type" defaultValue="PF" disabled={demo}>
                 <option value="PF">Pessoa física</option>
-                <option value="PJ">Pessoa jurídica</option>
+                <option value="PJ">Empresa</option>
               </select>
             </label>
             <label className="field">
               CPF ou CNPJ
-              <input name="document" disabled={demo} />
-            </label>
-            <label className="field">
-              Telefone
-              <input name="phone" disabled={demo} />
+              <input name="document" inputMode="numeric" disabled={demo} />
             </label>
             <label className="field">
               E-mail
               <input name="email" type="email" disabled={demo} />
             </label>
-            <label className="field">
-              Observações
-              <input name="notes" disabled={demo} />
-            </label>
           </div>
         </div>
-        <div className="form-section">
-          <h3>Endereço principal</h3>
-          <p>O local padrão pode ser alterado ao criar cada serviço.</p>
-          <div className="form-grid form-grid-3">
-            <label className="field">
-              Identificação
-              <input
-                name="address_label"
-                defaultValue="Principal"
-                disabled={demo}
-              />
-            </label>
-            <label className="field field-full">
-              Rua ou avenida
-              <input name="street" disabled={demo} />
-            </label>
-            <label className="field">
-              Número
-              <input name="number" disabled={demo} />
-            </label>
-            <label className="field">
-              Complemento
-              <input name="complement" disabled={demo} />
-            </label>
-            <label className="field">
-              Bairro
-              <input name="district" disabled={demo} />
-            </label>
-            <label className="field">
-              Cidade
-              <input name="city" disabled={demo} />
-            </label>
-            <label className="field">
-              Estado
-              <input name="state" defaultValue="SP" maxLength={2} disabled={demo} />
-            </label>
-            <label className="field">
-              CEP
-              <input name="postal_code" disabled={demo} />
-            </label>
+
+        <details className="form-disclosure">
+          <summary>
+            <span>
+              Adicionar endereço e observações
+              <small>Opcional, mas útil para gerar o orçamento</small>
+            </span>
+          </summary>
+          <div className="form-section">
+            <div className="form-grid form-grid-3">
+              <label className="field field-full">
+                Rua ou avenida
+                <input name="street" disabled={demo} />
+              </label>
+              <label className="field">
+                Número
+                <input name="number" disabled={demo} />
+              </label>
+              <label className="field">
+                Bairro
+                <input name="district" disabled={demo} />
+              </label>
+              <label className="field">
+                Cidade
+                <input name="city" disabled={demo} />
+              </label>
+              <label className="field">
+                Estado
+                <input name="state" defaultValue="GO" maxLength={2} disabled={demo} />
+              </label>
+              <label className="field">
+                CEP
+                <input name="postal_code" inputMode="numeric" disabled={demo} />
+              </label>
+              <label className="field">
+                Complemento
+                <input name="complement" disabled={demo} />
+              </label>
+              <label className="field">
+                Identificação
+                <input
+                  name="address_label"
+                  defaultValue="Principal"
+                  disabled={demo}
+                />
+              </label>
+              <label className="field field-full">
+                Observações
+                <textarea name="notes" disabled={demo} />
+              </label>
+            </div>
           </div>
-        </div>
+        </details>
+
         <div className="form-actions">
           {demo ? (
             <span className="notice">Conecte o Supabase para salvar cadastros.</span>

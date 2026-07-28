@@ -10,7 +10,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarDays, Clock3, MapPin, Plus, Search } from "lucide-react";
+import { Clock3, MapPin, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { VisitStatusBadge } from "@/components/visit-status-badge";
@@ -56,7 +56,7 @@ export default async function VisitsPage({
       : new Date();
   const view = ["month", "week", "today"].includes(query.view ?? "")
     ? query.view!
-    : "month";
+    : "today";
   const gridStart =
     view === "today"
       ? monthDate
@@ -104,30 +104,6 @@ export default async function VisitsPage({
           </Link>
         }
       />
-
-      <section className="quick-actions">
-        <Link className="quick-action-card" href="/visits/new?quick=1">
-          <CalendarDays size={24} />
-          <span>
-            <strong>Cadastro relâmpago</strong>
-            <small>Cliente, telefone, local e horário.</small>
-          </span>
-        </Link>
-        <Link className="quick-action-card" href="/clients#novo-cliente">
-          <Plus size={24} />
-          <span>
-            <strong>Novo cliente</strong>
-            <small>Complete o cadastro quando houver tempo.</small>
-          </span>
-        </Link>
-        <Link className="quick-action-card" href="/services/new">
-          <CircleDollarSignIcon />
-          <span>
-            <strong>Gerar orçamento</strong>
-            <small>Comece direto pelo fluxo comercial.</small>
-          </span>
-        </Link>
-      </section>
 
       <form className="card visit-filters">
         <div className="card-body form-grid form-grid-3">
@@ -275,8 +251,4 @@ export default async function VisitsPage({
       </section>
     </>
   );
-}
-
-function CircleDollarSignIcon() {
-  return <span className="quick-action-symbol">R$</span>;
 }

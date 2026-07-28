@@ -50,9 +50,23 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#071a33",
-  colorScheme: "light",
+  colorScheme: "light dark",
   viewportFit: "cover",
 };
+
+const themeScript = `
+  (() => {
+    try {
+      const savedTheme = localStorage.getItem("segvisiom-theme");
+      const theme = savedTheme === "light" || savedTheme === "dark"
+        ? savedTheme
+        : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.dataset.theme = theme;
+    } catch {
+      document.documentElement.dataset.theme = "light";
+    }
+  })();
+`;
 
 export default function RootLayout({
   children,
@@ -63,7 +77,11 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -1,10 +1,9 @@
 import {
-  ArrowUpRight,
   BriefcaseBusiness,
+  CalendarPlus,
   CircleDollarSign,
   Clock3,
   ReceiptText,
-  CalendarPlus,
   TrendingUp,
   WalletCards,
 } from "lucide-react";
@@ -16,7 +15,30 @@ import { getDashboardData, getVisitMetrics, getVisits } from "@/lib/data";
 import type { ServiceStatus } from "@/lib/types";
 import { dateKey, formatCurrency, formatDate, formatTime } from "@/lib/utils";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Início" };
+
+const workflow = [
+  {
+    href: "/clients#novo-cliente",
+    title: "Cadastrar cliente",
+    description: "Nome e contato",
+  },
+  {
+    href: "/visits/new",
+    title: "Agendar visita",
+    description: "Data e local",
+  },
+  {
+    href: "/services/new",
+    title: "Criar orçamento",
+    description: "Itens e valores",
+  },
+  {
+    href: "/services",
+    title: "Acompanhar trabalho",
+    description: "Aprovação e execução",
+  },
+];
 
 export default async function DashboardPage() {
   const [data, visitMetrics, visits] = await Promise.all([
@@ -34,61 +56,46 @@ export default async function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Visão geral"
-        title="Bom trabalho hoje"
-        description="Acompanhe o que está em andamento, os valores do negócio e os próximos pontos de atenção."
+        eyebrow="Seu dia"
+        title="O que você precisa fazer?"
+        description="Escolha uma ação abaixo. A plataforma conduz o restante passo a passo."
         action={
-          <Link className="button button-primary" href="/services/new">
-            Novo orçamento
-            <ArrowUpRight size={16} />
+          <Link className="button button-primary" href="/visits/new">
+            <CalendarPlus size={16} />
+            Agendar visita
           </Link>
         }
       />
 
-      <section className="stats-grid" aria-label="Indicadores principais">
-        <StatCard
-          label="Entradas consideradas"
-          value={formatCurrency(data.revenue)}
-          detail="Serviços aprovados, em garantia ou finalizados"
-          icon={CircleDollarSign}
-          tone="blue"
-        />
-        <StatCard
-          label="Custos internos"
-          value={formatCurrency(data.costs)}
-          detail="Lançamentos reais registrados"
-          icon={WalletCards}
-          tone="amber"
-        />
-        <StatCard
-          label="Margem apurada"
-          value={formatCurrency(data.margin)}
-          detail="Entradas menos custos reais"
-          icon={TrendingUp}
-          tone="green"
-        />
-        <StatCard
-          label="Tempo médio"
-          value={`${data.averageDays.toFixed(1)} dias`}
-          detail="Serviços finalizados com datas completas"
-          icon={Clock3}
-          tone="red"
-        />
+      <section className="workflow-guide" aria-label="Fluxo de trabalho">
+        {workflow.map((step, index) => (
+          <Link className="workflow-step" href={step.href} key={step.href}>
+            <span className="workflow-step-number">{index + 1}</span>
+            <span>
+              <strong>{step.title}</strong>
+              <span>{step.description}</span>
+            </span>
+          </Link>
+        ))}
       </section>
 
       <section className="today-panel card">
         <div className="card-header">
           <div>
             <p className="eyebrow">Hoje</p>
-            <h2>{todayVisits.length ? `${todayVisits.length} visita(s) na agenda` : "Agenda livre"}</h2>
+            <h2>
+              {todayVisits.length
+                ? `${todayVisits.length} visita(s) na agenda`
+                : "Nenhuma visita marcada"}
+            </h2>
             <p>
               {visitMetrics
                 ? `${visitMetrics.scheduled_visits} agendadas e ${visitMetrics.converted_visits} convertidas no período.`
-                : "Organize as próximas visitas comerciais."}
+                : "Você pode organizar a próxima visita agora."}
             </p>
           </div>
           <div className="today-actions">
-            <Link className="button button-primary" href="/visits/new?quick=1">
+            <Link className="button button-primary" href="/visits/new">
               <CalendarPlus size={16} /> Nova visita
             </Link>
             <Link className="button button-secondary" href="/clients#novo-cliente">
@@ -109,12 +116,51 @@ export default async function DashboardPage() {
         ) : null}
       </section>
 
+      <details className="dashboard-indicators progressive-section">
+        <summary>
+          <span>
+            Indicadores do negócio
+            <small>Receitas, custos, margem e tempo médio</small>
+          </span>
+        </summary>
+        <section className="stats-grid" aria-label="Indicadores principais">
+          <StatCard
+            label="Entradas consideradas"
+            value={formatCurrency(data.revenue)}
+            detail="Serviços aprovados, em garantia ou finalizados"
+            icon={CircleDollarSign}
+            tone="blue"
+          />
+          <StatCard
+            label="Custos internos"
+            value={formatCurrency(data.costs)}
+            detail="Lançamentos reais registrados"
+            icon={WalletCards}
+            tone="amber"
+          />
+          <StatCard
+            label="Margem apurada"
+            value={formatCurrency(data.margin)}
+            detail="Entradas menos custos reais"
+            icon={TrendingUp}
+            tone="green"
+          />
+          <StatCard
+            label="Tempo médio"
+            value={`${data.averageDays.toFixed(1)} dias`}
+            detail="Serviços finalizados com datas completas"
+            icon={Clock3}
+            tone="red"
+          />
+        </section>
+      </details>
+
       <section className="dashboard-grid">
         <article className="card">
           <div className="card-header">
             <div>
-              <h2>Serviços recentes</h2>
-              <p>Os últimos trabalhos movimentados pela equipe.</p>
+              <h2>Orçamentos recentes</h2>
+              <p>Continue de onde parou sem procurar em outras telas.</p>
             </div>
             <Link className="button button-secondary button-small" href="/services">
               Ver todos
@@ -124,7 +170,7 @@ export default async function DashboardPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Serviço</th>
+                  <th>Orçamento</th>
                   <th>Status</th>
                   <th>Valor</th>
                   <th>Atualizado</th>
@@ -160,8 +206,8 @@ export default async function DashboardPage() {
           <article className="card">
             <div className="card-header">
               <div>
-                <h2>Operação por etapa</h2>
-                <p>Onde os serviços estão agora.</p>
+                <h2>Trabalhos por etapa</h2>
+                <p>Veja rapidamente onde cada orçamento está.</p>
               </div>
               <BriefcaseBusiness size={19} color="#60758f" />
             </div>
@@ -192,8 +238,8 @@ export default async function DashboardPage() {
               <div className="notice">
                 <ReceiptText size={18} />
                 <span>
-                  O módulo fiscal está em modo assistido. Revise o tipo da nota
-                  com a contabilidade antes de emitir.
+                  Notas fiscais ficam em Mais opções e devem ser revisadas antes
+                  da emissão.
                 </span>
               </div>
             </div>
