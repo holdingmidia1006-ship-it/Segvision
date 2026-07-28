@@ -1735,6 +1735,19 @@ textarea:disabled {
   gap: 6px;
 }
 
+:root[data-theme="dark"] .login-panel {
+  background: var(--background);
+}
+
+:root[data-theme="dark"] .login-card h2 {
+  color: var(--heading);
+}
+
+:root[data-theme="dark"] .login-card > p,
+:root[data-theme="dark"] .login-card label {
+  color: var(--muted);
+}
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2579,26 +2592,16 @@ textarea:disabled {
   }
 
   .login-visual {
-    min-height: 420px;
-    padding: 34px 26px;
-  }
-
-  .login-brand .brand-logo-horizontal {
-    width: min(100%, 270px);
-  }
-
-  .login-copy h1 {
-    font-size: 38px;
-  }
-
-  .login-points {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
+    display: none;
   }
 
   .login-panel {
-    padding: 24px 16px;
+    min-height: 100vh;
+    padding:
+      max(24px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
   }
 
   .login-card {
