@@ -14,6 +14,7 @@ import { Clock3, MapPin, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { VisitStatusBadge } from "@/components/visit-status-badge";
+import { Toast } from "@/components/ui/toast";
 import { getCalendarEvents, getVisits } from "@/lib/data";
 import type { VisitStatus } from "@/lib/types";
 import { dateKey, formatDayMonth, formatTime } from "@/lib/utils";
@@ -30,6 +31,7 @@ export default async function VisitsPage({
     view?: string;
     month?: string;
     date?: string;
+    deleted?: string;
   }>;
 }) {
   const query = await searchParams;
@@ -104,6 +106,7 @@ export default async function VisitsPage({
           </Link>
         }
       />
+      {query.deleted ? <Toast>Visita excluída.</Toast> : null}
 
       <form className="card visit-filters">
         <div className="card-body form-grid form-grid-3">

@@ -6,6 +6,7 @@ import {
   MapPin,
   PlusCircle,
   ReceiptText,
+  Trash2,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -13,25 +14,56 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-dialog";
+import { Toast } from "@/components/ui/toast";
 import {
+  addServiceEmployee,
   addServiceCost,
   addServiceItem,
+  deleteServiceCost,
+  deleteServiceItem,
+  removeServiceEmployee,
+  updateServiceCost,
+  updateServiceDetails,
+  updateServiceItem,
   updateServiceCommercialTerms,
   updateServiceStatus,
 } from "@/lib/actions";
-import { getService, isDemoMode } from "@/lib/data";
+import { getEmployees, getService, isDemoMode } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+const costCategoryOptions = [
+  ["COMBUSTIVEL", "Combustível"],
+  ["ALMOCO", "Almoço"],
+  ["DIARIA", "Diária"],
+  ["MEIA_DIARIA", "Meia diária"],
+  ["BONIFICACAO", "Bonificação"],
+  ["MATERIAL_EXTRA", "Material extra"],
+  ["PEDAGIO", "Pedágio"],
+  ["ESTACIONAMENTO", "Estacionamento"],
+  ["ALUGUEL_EQUIPAMENTO", "Aluguel de equipamento"],
+  ["OUTROS", "Outros"],
+] as const;
 
 export default async function ServiceDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{
+    cost?: string;
+    created?: string;
+    item?: string;
+    saved?: string;
+    team?: string;
+  }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const service = await getService(id);
+  const [service, employees] = await Promise.all([
+    getService(id),
+    getEmployees(),
+  ]);
   if (!service) notFound();
   const demo = isDemoMode();
   const costs = service.service_costs ?? [];
@@ -46,8 +78,12 @@ export default async function ServiceDetailPage({
   return (
     <>
       {query.created ? (
-        <div className="success-message">Orçamento criado com sucesso.</div>
+        <Toast>Orçamento criado com sucesso.</Toast>
       ) : null}
+      {query.saved ? <Toast>Alterações salvas.</Toast> : null}
+      {query.item ? <Toast>Itens do orçamento atualizados.</Toast> : null}
+      {query.cost ? <Toast>Custos do serviço atualizados.</Toast> : null}
+      {query.team ? <Toast>Equipe do serviço atualizada.</Toast> : null}
       <Link
         className="button button-secondary button-small"
         href="/services"
@@ -140,6 +176,75 @@ export default async function ServiceDetailPage({
                 </p>
               ) : null}
             </div>
+            <details className="card-disclosure">
+              <summary>Editar dados gerais</summary>
+              <form className="card-body form-grid" action={updateServiceDetails}>
+                <input type="hidden" name="id" value={service.id} />
+                <label className="field field-full">
+                  Título
+                  <input
+                    name="title"
+                    defaultValue={service.title}
+                    required
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field field-full">
+                  Descrição para o cliente
+                  <textarea
+                    name="description"
+                    defaultValue={service.description ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Início previsto
+                  <input
+                    name="estimated_start_at"
+                    type="date"
+                    defaultValue={service.estimated_start_at?.slice(0, 10) ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Entrega prevista
+                  <input
+                    name="estimated_end_at"
+                    type="date"
+                    defaultValue={service.estimated_end_at?.slice(0, 10) ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Custo previsto
+                  <input
+                    name="estimated_cost_amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={service.estimated_cost_amount}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field field-full">
+                  Observações para o cliente
+                  <textarea
+                    name="customer_notes"
+                    defaultValue={service.customer_notes ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field field-full">
+                  Notas internas
+                  <textarea
+                    name="internal_notes"
+                    defaultValue={service.internal_notes ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <SubmitButton disabled={demo}>Salvar dados gerais</SubmitButton>
+              </form>
+            </details>
           </article>
 
           <article className="card">
@@ -153,16 +258,96 @@ export default async function ServiceDetailPage({
               {service.service_items?.length ? (
                 <div className="simple-list">
                   {service.service_items.map((item) => (
-                    <div className="simple-list-item" key={item.id}>
-                      <div>
-                        <strong>{item.description}</strong>
+                    <details className="record-disclosure" key={item.id}>
+                      <summary>
                         <span>
-                          {item.quantity} {item.unit} ×{" "}
-                          {formatCurrency(item.unit_price)}
+                          <strong>{item.description}</strong>
+                          <small>
+                            {item.quantity} {item.unit} ×{" "}
+                            {formatCurrency(item.unit_price)}
+                          </small>
                         </span>
-                      </div>
-                      <strong>{formatCurrency(item.total_price)}</strong>
-                    </div>
+                        <strong>{formatCurrency(item.total_price)}</strong>
+                      </summary>
+                      <form className="form-grid" action={updateServiceItem}>
+                        <input type="hidden" name="id" value={item.id} />
+                        <input
+                          type="hidden"
+                          name="service_id"
+                          value={service.id}
+                        />
+                        <label className="field field-full">
+                          Descrição
+                          <input
+                            name="description"
+                            defaultValue={item.description}
+                            required
+                            disabled={demo}
+                          />
+                        </label>
+                        <label className="field">
+                          Quantidade
+                          <input
+                            name="quantity"
+                            type="number"
+                            min="0.001"
+                            step="0.001"
+                            defaultValue={item.quantity}
+                            required
+                            disabled={demo}
+                          />
+                        </label>
+                        <label className="field">
+                          Unidade
+                          <input
+                            name="unit"
+                            defaultValue={item.unit}
+                            disabled={demo}
+                          />
+                        </label>
+                        <label className="field">
+                          Valor unitário
+                          <input
+                            name="unit_price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            defaultValue={item.unit_price}
+                            required
+                            disabled={demo}
+                          />
+                        </label>
+                        <label className="field">
+                          Custo interno unitário
+                          <input
+                            name="unit_cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            defaultValue={item.unit_cost}
+                            disabled={demo}
+                          />
+                        </label>
+                        <SubmitButton disabled={demo}>Salvar item</SubmitButton>
+                      </form>
+                      {!demo ? (
+                        <form className="record-danger" action={deleteServiceItem}>
+                          <input type="hidden" name="id" value={item.id} />
+                          <input
+                            type="hidden"
+                            name="service_id"
+                            value={service.id}
+                          />
+                          <ConfirmSubmitButton
+                            title={`Excluir ${item.description}?`}
+                            description="O item deixará de aparecer no orçamento e no próximo PDF gerado."
+                            confirmLabel="Excluir item"
+                          >
+                            <Trash2 aria-hidden="true" size={14} /> Excluir item
+                          </ConfirmSubmitButton>
+                        </form>
+                      ) : null}
+                    </details>
                   ))}
                 </div>
               ) : (
@@ -244,9 +429,27 @@ export default async function ServiceDetailPage({
                           {formatCurrency(assignment.daily_rate_snapshot)}
                         </span>
                       </div>
-                      <span className="status-badge status-running">
-                        Escalado
-                      </span>
+                      {!demo ? (
+                        <form action={removeServiceEmployee}>
+                          <input type="hidden" name="id" value={assignment.id} />
+                          <input
+                            type="hidden"
+                            name="service_id"
+                            value={service.id}
+                          />
+                          <ConfirmSubmitButton
+                            title="Remover profissional do serviço?"
+                            description="O profissional deixará a equipe deste serviço. Os custos já lançados não serão apagados."
+                            confirmLabel="Remover"
+                          >
+                            Remover
+                          </ConfirmSubmitButton>
+                        </form>
+                      ) : (
+                        <span className="status-badge status-running">
+                          Escalado
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -255,6 +458,33 @@ export default async function ServiceDetailPage({
                   Nenhum profissional escalado.
                 </span>
               )}
+              <details className="inline-disclosure">
+                <summary>Adicionar profissional</summary>
+                <form className="form-grid single-column" action={addServiceEmployee}>
+                  <input type="hidden" name="service_id" value={service.id} />
+                  <label className="field">
+                    Profissional disponível
+                    <select name="employee_id" required disabled={demo}>
+                      <option value="">Selecione</option>
+                      {employees
+                        .filter(
+                          (employee) =>
+                            employee.active &&
+                            !service.service_employees?.some(
+                              (assignment) =>
+                                assignment.employee_id === employee.id,
+                            ),
+                        )
+                        .map((employee) => (
+                          <option key={employee.id} value={employee.id}>
+                            {employee.name}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <SubmitButton disabled={demo}>Adicionar à equipe</SubmitButton>
+                </form>
+              </details>
             </div>
           </article>
         </div>
@@ -433,6 +663,107 @@ export default async function ServiceDetailPage({
               </div>
               <PlusCircle size={19} color="#60758f" />
             </div>
+            {costs.length ? (
+              <div className="card-body simple-list">
+                {costs.map((cost) => (
+                  <details className="record-disclosure" key={cost.id}>
+                    <summary>
+                      <span>
+                        <strong>
+                          {costCategoryOptions.find(
+                            ([value]) => value === cost.category,
+                          )?.[1] ?? cost.category}
+                        </strong>
+                        <small>
+                          {cost.description || "Sem descrição"} •{" "}
+                          {formatDate(cost.cost_date)}
+                        </small>
+                      </span>
+                      <strong>{formatCurrency(cost.amount)}</strong>
+                    </summary>
+                    <form className="form-grid single-column" action={updateServiceCost}>
+                      <input type="hidden" name="id" value={cost.id} />
+                      <input
+                        type="hidden"
+                        name="service_id"
+                        value={service.id}
+                      />
+                      <label className="field">
+                        Categoria
+                        <select
+                          name="category"
+                          defaultValue={cost.category}
+                          disabled={demo}
+                        >
+                          {costCategoryOptions.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        Descrição
+                        <input
+                          name="description"
+                          defaultValue={cost.description ?? ""}
+                          disabled={demo}
+                        />
+                      </label>
+                      <label className="field">
+                        Valor
+                        <input
+                          name="amount"
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          defaultValue={cost.amount}
+                          required
+                          disabled={demo}
+                        />
+                      </label>
+                      <label className="field">
+                        Data
+                        <input
+                          name="cost_date"
+                          type="date"
+                          defaultValue={cost.cost_date.slice(0, 10)}
+                          required
+                          disabled={demo}
+                        />
+                      </label>
+                      <label className="checkbox-card">
+                        <input
+                          name="visible_to_customer"
+                          type="checkbox"
+                          defaultChecked={cost.visible_to_customer}
+                          disabled={demo}
+                        />
+                        Repassar e mostrar no PDF
+                      </label>
+                      <SubmitButton disabled={demo}>Salvar custo</SubmitButton>
+                    </form>
+                    {!demo ? (
+                      <form className="record-danger" action={deleteServiceCost}>
+                        <input type="hidden" name="id" value={cost.id} />
+                        <input
+                          type="hidden"
+                          name="service_id"
+                          value={service.id}
+                        />
+                        <ConfirmSubmitButton
+                          title="Excluir este custo?"
+                          description="O valor deixará de compor o custo real e a margem do serviço."
+                          confirmLabel="Excluir custo"
+                        >
+                          <Trash2 aria-hidden="true" size={14} /> Excluir custo
+                        </ConfirmSubmitButton>
+                      </form>
+                    ) : null}
+                  </details>
+                ))}
+              </div>
+            ) : null}
             <details className="card-disclosure">
               <summary>Lançar novo custo</summary>
               <form className="card-body" action={addServiceCost}>

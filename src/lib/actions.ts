@@ -457,6 +457,7 @@ export async function updateVisit(formData: FormData) {
   revalidatePath(`/visits/${id}`);
   revalidatePath("/visits");
   revalidatePath("/dashboard");
+  redirect(`/visits/${id}?saved=1`);
 }
 
 export async function convertVisitToService(formData: FormData) {
@@ -501,11 +502,12 @@ export async function convertVisitToService(formData: FormData) {
 
 export async function addClientNote(formData: FormData) {
   const clientId = z.string().uuid().parse(formData.get("client_id"));
+  const visitId =
+    z.string().uuid().safeParse(formData.get("visit_id")).data ?? null;
   const { supabase, user } = await requireSession();
   const { error } = await supabase.from("client_notes").insert({
     client_id: clientId,
-    visit_id:
-      z.string().uuid().safeParse(formData.get("visit_id")).data ?? null,
+    visit_id: visitId,
     note_type: z
       .enum(["MANUAL", "COMERCIAL", "TECNICA"])
       .catch("MANUAL")
@@ -515,6 +517,8 @@ export async function addClientNote(formData: FormData) {
   });
   if (error) throw error;
   revalidatePath(`/clients/${clientId}`);
+  if (visitId) redirect(`/visits/${visitId}?note=1`);
+  redirect(`/clients/${clientId}?note=1`);
 }
 
 export async function uploadVisitAttachment(formData: FormData) {
@@ -538,6 +542,7 @@ export async function uploadVisitAttachment(formData: FormData) {
   });
   if (error) throw error;
   revalidatePath(`/visits/${visitId}`);
+  redirect(`/visits/${visitId}?attachment=1`);
 }
 
 export async function updateServiceStatus(formData: FormData) {
@@ -558,6 +563,7 @@ export async function updateServiceStatus(formData: FormData) {
   revalidatePath(`/services/${id}`);
   revalidatePath("/board");
   revalidatePath("/dashboard");
+  redirect(`/services/${id}?saved=1`);
 }
 
 export async function addServiceCost(formData: FormData) {
@@ -590,6 +596,7 @@ export async function addServiceCost(formData: FormData) {
   if (error) throw error;
   revalidatePath(`/services/${serviceId}`);
   revalidatePath("/dashboard");
+  redirect(`/services/${serviceId}?cost=1`);
 }
 
 export async function addServiceItem(formData: FormData) {
@@ -625,6 +632,7 @@ export async function addServiceItem(formData: FormData) {
   });
   if (error) throw error;
   revalidatePath(`/services/${serviceId}`);
+  redirect(`/services/${serviceId}?item=1`);
 }
 
 export async function updateServiceCommercialTerms(formData: FormData) {
@@ -671,6 +679,7 @@ export async function updateServiceCommercialTerms(formData: FormData) {
     .eq("id", serviceId);
   if (error) throw error;
   revalidatePath(`/services/${serviceId}`);
+  redirect(`/services/${serviceId}?saved=1`);
 }
 
 export async function createFiscalDocument(formData: FormData) {
@@ -768,6 +777,7 @@ export async function createServiceType(formData: FormData) {
   });
   if (error) throw error;
   revalidatePath("/settings");
+  redirect("/settings?created=1");
 }
 
 export async function createCatalogItem(formData: FormData) {
@@ -780,4 +790,523 @@ export async function createCatalogItem(formData: FormData) {
   });
   if (error) throw error;
   revalidatePath("/settings");
+  redirect("/settings?created=1");
+}
+
+export async function updateClient(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const input = z
+    .object({
+      name: requiredText,
+      person_type: z.enum(["PF", "PJ"]),
+      document: optionalText,
+      phone: optionalText,
+      email: z
+        .union([z.literal(""), z.string().email()])
+        .transform((value) => value || null),
+      notes: optionalText,
+      record_type: z.enum(["LEAD", "CLIENTE"]),
+    })
+    .parse(Object.fromEntries(formData));
+  const { supabase } = await requireSession();
+  const { error } = await supabase.from("clients").update(input).eq("id", id);
+  if (error) throw error;
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${id}`);
+  redirect(`/clients/${id}?saved=1`);
+}
+
+function clientAddressInput(formData: FormData) {
+  return {
+    label: requiredText.parse(formData.get("label")),
+    street: requiredText.parse(formData.get("street")),
+    number: optionalText.parse(formData.get("number")),
+    complement: optionalText.parse(formData.get("complement")),
+    district: optionalText.parse(formData.get("district")),
+    city: requiredText.parse(formData.get("city")),
+    state: z
+      .string()
+      .trim()
+      .length(2)
+      .transform((value) => value.toUpperCase())
+      .parse(formData.get("state")),
+    postal_code: optionalText.parse(formData.get("postal_code")),
+  };
+}
+
+export async function addClientAddress(formData: FormData) {
+  const clientId = z.string().uuid().parse(formData.get("client_id"));
+  const { supabase } = await requireSession();
+  const { count, error: countError } = await supabase
+    .from("client_addresses")
+    .select("id", { count: "exact", head: true })
+    .eq("client_id", clientId);
+  if (countError) throw countError;
+  const isPrimary = formData.get("is_primary") === "on" || count === 0;
+  const { data: address, error } = await supabase
+    .from("client_addresses")
+    .insert({
+      client_id: clientId,
+      ...clientAddressInput(formData),
+      is_primary: isPrimary,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  if (isPrimary) {
+    const { error: resetError } = await supabase
+      .from("client_addresses")
+      .update({ is_primary: false })
+      .eq("client_id", clientId)
+      .neq("id", address.id);
+    if (resetError) throw resetError;
+  }
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}?address=1`);
+}
+
+export async function updateClientAddress(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const clientId = z.string().uuid().parse(formData.get("client_id"));
+  const { supabase } = await requireSession();
+  const isPrimary = formData.get("is_primary") === "on";
+  const { error } = await supabase
+    .from("client_addresses")
+    .update({ ...clientAddressInput(formData), is_primary: isPrimary })
+    .eq("id", id)
+    .eq("client_id", clientId);
+  if (error) throw error;
+  if (isPrimary) {
+    const { error: resetError } = await supabase
+      .from("client_addresses")
+      .update({ is_primary: false })
+      .eq("client_id", clientId)
+      .neq("id", id);
+    if (resetError) throw resetError;
+  }
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}?address=1`);
+}
+
+export async function deleteClientAddress(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const clientId = z.string().uuid().parse(formData.get("client_id"));
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase
+    .from("client_addresses")
+    .delete()
+    .eq("id", id)
+    .eq("client_id", clientId);
+  if (error) throw error;
+  const { data: firstAddress, error: addressError } = await supabase
+    .from("client_addresses")
+    .select("id")
+    .eq("client_id", clientId)
+    .order("created_at")
+    .limit(1)
+    .maybeSingle();
+  if (addressError) throw addressError;
+  if (firstAddress) {
+    const { error: primaryError } = await supabase
+      .from("client_addresses")
+      .update({ is_primary: true })
+      .eq("id", firstAddress.id);
+    if (primaryError) throw primaryError;
+  }
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}?address=1`);
+}
+
+export async function updateEmployee(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase
+    .from("employees")
+    .update({
+      name: requiredText.parse(formData.get("name")),
+      document: optionalText.parse(formData.get("document")),
+      phone: optionalText.parse(formData.get("phone")),
+      daily_rate: z.number().nonnegative().parse(numberValue(formData.get("daily_rate"))),
+      half_daily_rate: z
+        .number()
+        .nonnegative()
+        .parse(numberValue(formData.get("half_daily_rate"))),
+      default_bonus: z
+        .number()
+        .nonnegative()
+        .parse(numberValue(formData.get("default_bonus"))),
+      notes: optionalText.parse(formData.get("notes")),
+      active: formData.get("active") === "on",
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/team");
+  redirect("/team?updated=1");
+}
+
+export async function updateServiceDetails(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("services")
+    .update({
+      title: requiredText.parse(formData.get("title")),
+      description: optionalText.parse(formData.get("description")),
+      customer_notes: optionalText.parse(formData.get("customer_notes")),
+      internal_notes: optionalText.parse(formData.get("internal_notes")),
+      estimated_start_at: String(formData.get("estimated_start_at") ?? "") || null,
+      estimated_end_at: String(formData.get("estimated_end_at") ?? "") || null,
+      estimated_cost_amount: z
+        .number()
+        .nonnegative()
+        .parse(numberValue(formData.get("estimated_cost_amount"))),
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath(`/services/${id}`);
+  revalidatePath("/services");
+  revalidatePath("/dashboard");
+  redirect(`/services/${id}?saved=1`);
+}
+
+export async function updateServiceItem(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const quantity = z.number().positive().parse(numberValue(formData.get("quantity")));
+  const unitPrice = z.number().nonnegative().parse(numberValue(formData.get("unit_price")));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("service_items")
+    .update({
+      description: requiredText.parse(formData.get("description")),
+      unit: optionalText.parse(formData.get("unit")) ?? "un",
+      quantity,
+      unit_price: unitPrice,
+      unit_cost: z.number().nonnegative().parse(numberValue(formData.get("unit_cost"))),
+      total_price: quantity * unitPrice,
+    })
+    .eq("id", id)
+    .eq("service_id", serviceId);
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+  redirect(`/services/${serviceId}?item=1`);
+}
+
+export async function deleteServiceItem(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("service_items")
+    .delete()
+    .eq("id", id)
+    .eq("service_id", serviceId);
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+  redirect(`/services/${serviceId}?item=1`);
+}
+
+export async function updateServiceCost(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("service_costs")
+    .update({
+      category: z
+        .enum([
+          "COMBUSTIVEL",
+          "ALMOCO",
+          "DIARIA",
+          "MEIA_DIARIA",
+          "BONIFICACAO",
+          "MATERIAL_EXTRA",
+          "PEDAGIO",
+          "ESTACIONAMENTO",
+          "ALUGUEL_EQUIPAMENTO",
+          "OUTROS",
+        ])
+        .parse(formData.get("category")),
+      description: optionalText.parse(formData.get("description")),
+      amount: z.number().positive().parse(numberValue(formData.get("amount"))),
+      cost_date: String(formData.get("cost_date") ?? ""),
+      visible_to_customer: formData.get("visible_to_customer") === "on",
+    })
+    .eq("id", id)
+    .eq("service_id", serviceId);
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+  revalidatePath("/dashboard");
+  redirect(`/services/${serviceId}?cost=1`);
+}
+
+export async function deleteServiceCost(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("service_costs")
+    .delete()
+    .eq("id", id)
+    .eq("service_id", serviceId);
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+  revalidatePath("/dashboard");
+  redirect(`/services/${serviceId}?cost=1`);
+}
+
+export async function addServiceEmployee(formData: FormData) {
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const employeeId = z.string().uuid().parse(formData.get("employee_id"));
+  const { supabase } = await requireSession();
+  const { data: employee, error: employeeError } = await supabase
+    .from("employees")
+    .select("id,daily_rate,half_daily_rate,default_bonus")
+    .eq("id", employeeId)
+    .single();
+  if (employeeError) throw employeeError;
+  const { error } = await supabase.from("service_employees").insert({
+    service_id: serviceId,
+    employee_id: employee.id,
+    daily_rate_snapshot: employee.daily_rate,
+    half_daily_rate_snapshot: employee.half_daily_rate,
+    bonus_snapshot: employee.default_bonus,
+  });
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+  redirect(`/services/${serviceId}?team=1`);
+}
+
+export async function removeServiceEmployee(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("service_employees")
+    .delete()
+    .eq("id", id)
+    .eq("service_id", serviceId);
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+  redirect(`/services/${serviceId}?team=1`);
+}
+
+export async function deleteVisit(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireSession();
+  const { data: attachments, error: attachmentError } = await supabase
+    .from("visit_attachments")
+    .select("storage_path")
+    .eq("visit_id", id);
+  if (attachmentError) throw attachmentError;
+  const { error } = await supabase.from("visits").delete().eq("id", id);
+  if (error) throw error;
+  const paths = (attachments ?? []).map((attachment) => attachment.storage_path);
+  if (paths.length) {
+    const { error: storageError } = await supabase.storage
+      .from("visit-attachments")
+      .remove(paths);
+    if (storageError) throw storageError;
+  }
+  revalidatePath("/visits");
+  revalidatePath("/dashboard");
+  redirect("/visits?deleted=1");
+}
+
+export async function deleteVisitAttachment(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const visitId = z.string().uuid().parse(formData.get("visit_id"));
+  const { supabase } = await requireSession();
+  const { data: attachment, error: attachmentError } = await supabase
+    .from("visit_attachments")
+    .select("storage_path")
+    .eq("id", id)
+    .eq("visit_id", visitId)
+    .single();
+  if (attachmentError) throw attachmentError;
+  const { error: storageError } = await supabase.storage
+    .from("visit-attachments")
+    .remove([attachment.storage_path]);
+  if (storageError) throw storageError;
+  const { error } = await supabase
+    .from("visit_attachments")
+    .delete()
+    .eq("id", id)
+    .eq("visit_id", visitId);
+  if (error) throw error;
+  revalidatePath(`/visits/${visitId}`);
+  redirect(`/visits/${visitId}?attachment=1`);
+}
+
+export async function updateFiscalDocument(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireSession();
+  const { error } = await supabase
+    .from("fiscal_documents")
+    .update({
+      status: z
+        .enum([
+          "NAO_EMITIDA",
+          "PREPARADA",
+          "EMITIDA",
+          "CANCELADA",
+          "ERRO",
+          "AGUARDANDO_CONTABILIDADE",
+        ])
+        .parse(formData.get("status")),
+      number: optionalText.parse(formData.get("number")),
+      series: optionalText.parse(formData.get("series")),
+      access_key: optionalText.parse(formData.get("access_key")),
+      consultation_url: optionalText.parse(formData.get("consultation_url")),
+      notes: optionalText.parse(formData.get("notes")),
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/invoices");
+  redirect("/invoices?updated=1");
+}
+
+export async function deleteFiscalDocument(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireSession();
+  const { data: document, error: documentError } = await supabase
+    .from("fiscal_documents")
+    .select("xml_path,pdf_path")
+    .eq("id", id)
+    .single();
+  if (documentError) throw documentError;
+  const paths = [document.xml_path, document.pdf_path].filter(
+    (path): path is string => Boolean(path),
+  );
+  if (paths.length) {
+    const { error: storageError } = await supabase.storage
+      .from("service-attachments")
+      .remove(paths);
+    if (storageError) throw storageError;
+  }
+  const { error } = await supabase.from("fiscal_documents").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/invoices");
+  redirect("/invoices?deleted=1");
+}
+
+export async function updateServiceType(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase
+    .from("service_types")
+    .update({
+      name: requiredText.parse(formData.get("name")),
+      description: optionalText.parse(formData.get("description")),
+      active: formData.get("active") === "on",
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/settings");
+  redirect("/settings?saved=1");
+}
+
+export async function deleteServiceType(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase.from("service_types").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/settings");
+  redirect("/settings?deleted=1");
+}
+
+export async function updateCatalogItem(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase
+    .from("catalog_items")
+    .update({
+      name: requiredText.parse(formData.get("name")),
+      unit: requiredText.parse(formData.get("unit")),
+      sale_price: z.number().nonnegative().parse(numberValue(formData.get("sale_price"))),
+      standard_cost: z
+        .number()
+        .nonnegative()
+        .parse(numberValue(formData.get("standard_cost"))),
+      active: formData.get("active") === "on",
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/settings");
+  redirect("/settings?saved=1");
+}
+
+export async function deleteCatalogItem(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase.from("catalog_items").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/settings");
+  redirect("/settings?deleted=1");
+}
+
+export async function updateCompanySettings(formData: FormData) {
+  const { supabase } = await requireAdminSession();
+  const { error } = await supabase
+    .from("company_settings")
+    .update({
+      legal_name: requiredText.parse(formData.get("legal_name")),
+      trade_name: requiredText.parse(formData.get("trade_name")),
+      document: requiredText.parse(formData.get("document")),
+      phone: optionalText.parse(formData.get("phone")),
+      email: z
+        .union([z.literal(""), z.string().email()])
+        .transform((value) => value || null)
+        .parse(String(formData.get("email") ?? "")),
+      instagram: optionalText.parse(formData.get("instagram")),
+      street: optionalText.parse(formData.get("street")),
+      number: optionalText.parse(formData.get("number")),
+      complement: optionalText.parse(formData.get("complement")),
+      district: optionalText.parse(formData.get("district")),
+      city: requiredText.parse(formData.get("city")),
+      state: z.string().trim().length(2).parse(formData.get("state")).toUpperCase(),
+      postal_code: optionalText.parse(formData.get("postal_code")),
+      responsible_name: optionalText.parse(formData.get("responsible_name")),
+      responsible_role: optionalText.parse(formData.get("responsible_role")),
+      default_validity_days: z
+        .number()
+        .int()
+        .positive()
+        .parse(numberValue(formData.get("default_validity_days"))),
+      default_payment_terms: optionalText.parse(formData.get("default_payment_terms")),
+      default_execution_deadline: optionalText.parse(
+        formData.get("default_execution_deadline"),
+      ),
+      default_warranty_terms: optionalText.parse(formData.get("default_warranty_terms")),
+    })
+    .eq("id", true);
+  if (error) throw error;
+  revalidatePath("/settings");
+  revalidatePath("/services");
+  redirect("/settings?saved=1");
+}
+
+export async function deleteGeneratedDocument(formData: FormData) {
+  const id = z.string().uuid().parse(formData.get("id"));
+  const { supabase } = await requireSession();
+  const { data: document, error: documentError } = await supabase
+    .from("generated_documents")
+    .select("storage_path")
+    .eq("id", id)
+    .single();
+  if (documentError) throw documentError;
+  const { error } = await supabase
+    .from("generated_documents")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+  const { error: storageError } = await supabase.storage
+    .from("generated-documents")
+    .remove([document.storage_path]);
+  if (storageError) throw storageError;
+  revalidatePath("/documents");
+  redirect("/documents?deleted=1");
 }

@@ -89,7 +89,7 @@ export default async function ServicesPage({
               <tbody>
                 {filtered.map((service) => (
                   <tr key={service.id}>
-                    <td>
+                    <td data-label="Serviço e cliente">
                       <Link
                         className="cell-title"
                         href={`/services/${service.id}`}
@@ -100,14 +100,14 @@ export default async function ServicesPage({
                         {service.clients?.name ?? "Cliente não informado"}
                       </span>
                     </td>
-                    <td>{service.service_types?.name ?? "Não definido"}</td>
-                    <td>
+                    <td data-label="Tipo">{service.service_types?.name ?? "Não definido"}</td>
+                    <td data-label="Status">
                       <StatusBadge
                         status={service.status as ServiceStatus}
                         pulse
                       />
                     </td>
-                    <td>
+                    <td data-label="Previsão">
                       <span className="cell-title">
                         <CalendarDays
                           size={12}
@@ -116,8 +116,8 @@ export default async function ServicesPage({
                         {formatDate(service.estimated_end_at)}
                       </span>
                     </td>
-                    <td>{formatCurrency(service.sale_amount)}</td>
-                    <td>
+                    <td data-label="Valor">{formatCurrency(service.sale_amount)}</td>
+                    <td data-label="Ações">
                       <Link
                         className="button button-secondary button-small"
                         href={`/services/${service.id}`}

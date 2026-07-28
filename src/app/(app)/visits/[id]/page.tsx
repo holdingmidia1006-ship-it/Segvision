@@ -7,14 +7,19 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/submit-button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-dialog";
+import { Toast } from "@/components/ui/toast";
 import { VisitStatusBadge } from "@/components/visit-status-badge";
 import {
   addClientNote,
   convertVisitToService,
+  deleteVisit,
+  deleteVisitAttachment,
   updateVisit,
   uploadVisitAttachment,
 } from "@/lib/actions";
@@ -26,7 +31,12 @@ export default async function VisitDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{
+    attachment?: string;
+    created?: string;
+    note?: string;
+    saved?: string;
+  }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -47,8 +57,11 @@ export default async function VisitDetailPage({
   return (
     <>
       {query.created ? (
-        <div className="success-message">Visita agendada com sucesso.</div>
+        <Toast>Visita agendada com sucesso.</Toast>
       ) : null}
+      {query.saved ? <Toast>Visita atualizada.</Toast> : null}
+      {query.attachment ? <Toast>Anexos atualizados.</Toast> : null}
+      {query.note ? <Toast>Observação registrada.</Toast> : null}
       <Link className="button button-secondary button-small" href="/visits">
         <ArrowLeft size={14} />
         Voltar às visitas
@@ -127,11 +140,27 @@ export default async function VisitDetailPage({
               {(visit.visit_attachments ?? []).map((attachment) => (
                 <div className="simple-list-item" key={attachment.id}>
                   <strong>{attachment.file_name}</strong>
-                  {attachment.signed_url ? (
-                    <a className="button button-secondary button-small" href={attachment.signed_url}>
-                      <Download size={14} /> Baixar
-                    </a>
-                  ) : null}
+                  <div className="inline-actions">
+                    {attachment.signed_url ? (
+                      <a className="button button-secondary button-small" href={attachment.signed_url}>
+                        <Download aria-hidden="true" size={14} /> Baixar
+                      </a>
+                    ) : null}
+                    {!demo ? (
+                      <form action={deleteVisitAttachment}>
+                        <input type="hidden" name="id" value={attachment.id} />
+                        <input type="hidden" name="visit_id" value={visit.id} />
+                        <ConfirmSubmitButton
+                          title={`Excluir ${attachment.file_name}?`}
+                          description="O arquivo será removido permanentemente do armazenamento privado."
+                          confirmLabel="Excluir arquivo"
+                        >
+                          <Trash2 aria-hidden="true" size={14} />
+                          Excluir
+                        </ConfirmSubmitButton>
+                      </form>
+                    ) : null}
+                  </div>
                 </div>
               ))}
               {!visit.visit_attachments?.length ? <span className="cell-subtitle">Nenhum anexo enviado.</span> : null}
@@ -281,6 +310,29 @@ export default async function VisitDetailPage({
               </form>
             </details>
           </article>
+
+          {!demo ? (
+            <article className="card danger-zone">
+              <div className="card-header">
+                <div>
+                  <h2>Excluir visita</h2>
+                  <p>Use apenas para agendamentos criados por engano.</p>
+                </div>
+              </div>
+              <form className="card-body" action={deleteVisit}>
+                <input type="hidden" name="id" value={visit.id} />
+                <ConfirmSubmitButton
+                  className="button-full"
+                  title="Excluir esta visita?"
+                  description="Anexos e responsáveis serão removidos. Se a visita já originou um orçamento, o vínculo histórico poderá ficar vazio."
+                  confirmLabel="Excluir visita"
+                >
+                  <Trash2 aria-hidden="true" size={15} />
+                  Excluir visita
+                </ConfirmSubmitButton>
+              </form>
+            </article>
+          ) : null}
         </aside>
       </section>
     </>

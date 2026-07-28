@@ -6,7 +6,7 @@ import { useSyncExternalStore } from "react";
 type Theme = "light" | "dark";
 
 function currentTheme(): Theme {
-  if (typeof document === "undefined") return "light";
+  if (typeof document === "undefined") return "dark";
   return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
@@ -16,7 +16,7 @@ function subscribe(callback: () => void) {
 }
 
 export function ThemeToggle({ iconOnly = false }: { iconOnly?: boolean }) {
-  const theme = useSyncExternalStore(subscribe, currentTheme, () => "light");
+  const theme = useSyncExternalStore(subscribe, currentTheme, () => "dark");
 
   function toggleTheme() {
     const nextTheme: Theme = currentTheme() === "dark" ? "light" : "dark";

@@ -1,9 +1,14 @@
-import { Download, FileText, Info, UploadCloud } from "lucide-react";
+import { Download, FileText, Info, Trash2, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { uploadDocumentTemplate } from "@/lib/actions";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-dialog";
+import { Toast } from "@/components/ui/toast";
+import {
+  deleteGeneratedDocument,
+  uploadDocumentTemplate,
+} from "@/lib/actions";
 import {
   getCurrentProfile,
   getGeneratedDocuments,
@@ -16,7 +21,7 @@ export const metadata = { title: "Documentos" };
 export default async function DocumentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ template?: string }>;
+  searchParams: Promise<{ deleted?: string; template?: string }>;
 }) {
   const documents = await getGeneratedDocuments();
   const demo = isDemoMode();
@@ -32,10 +37,9 @@ export default async function DocumentsPage({
         description="Mantenha o modelo do Word da empresa e os orçamentos gerados em um armazenamento privado."
       />
       {query.template ? (
-        <div className="success-message">
-          Novo template definido como padrão.
-        </div>
+        <Toast>Novo template definido como padrão.</Toast>
       ) : null}
+      {query.deleted ? <Toast>Documento excluído.</Toast> : null}
 
       <section className="dashboard-grid">
         <article className="card">
@@ -60,26 +64,41 @@ export default async function DocumentsPage({
                 <tbody>
                   {documents.map((document) => (
                     <tr key={document.id}>
-                      <td className="cell-title">{document.name}</td>
-                      <td>{document.services?.title ?? "Serviço"}</td>
-                      <td>{formatDate(document.created_at)}</td>
-                      <td>
-                        {document.signed_url ? (
-                          <a
-                            className="button button-secondary button-small"
-                            href={document.signed_url}
-                          >
-                            <Download size={14} />
-                            Baixar
-                          </a>
-                        ) : (
-                          <Link
-                            className="button button-secondary button-small"
-                            href={`/services/${document.service_id}`}
-                          >
-                            Abrir serviço
-                          </Link>
-                        )}
+                      <td className="cell-title" data-label="Arquivo">{document.name}</td>
+                      <td data-label="Serviço">{document.services?.title ?? "Serviço"}</td>
+                      <td data-label="Gerado em">{formatDate(document.created_at)}</td>
+                      <td data-label="Ações">
+                        <div className="inline-actions">
+                          {document.signed_url ? (
+                            <a
+                              className="button button-secondary button-small"
+                              href={document.signed_url}
+                            >
+                              <Download aria-hidden="true" size={14} />
+                              Baixar
+                            </a>
+                          ) : (
+                            <Link
+                              className="button button-secondary button-small"
+                              href={`/services/${document.service_id}`}
+                            >
+                              Abrir serviço
+                            </Link>
+                          )}
+                          {!demo ? (
+                            <form action={deleteGeneratedDocument}>
+                              <input type="hidden" name="id" value={document.id} />
+                              <ConfirmSubmitButton
+                                title={`Excluir ${document.name}?`}
+                                description="O arquivo será removido permanentemente do armazenamento privado. O orçamento original continuará disponível."
+                                confirmLabel="Excluir documento"
+                              >
+                                <Trash2 aria-hidden="true" size={14} />
+                                Excluir
+                              </ConfirmSubmitButton>
+                            </form>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   ))}

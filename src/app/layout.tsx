@@ -60,10 +60,10 @@ const themeScript = `
       const savedTheme = localStorage.getItem("segvisiom-theme");
       const theme = savedTheme === "light" || savedTheme === "dark"
         ? savedTheme
-        : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        : "dark";
       document.documentElement.dataset.theme = theme;
     } catch {
-      document.documentElement.dataset.theme = "light";
+      document.documentElement.dataset.theme = "dark";
     }
   })();
 `;
@@ -76,6 +76,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      data-theme="dark"
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >

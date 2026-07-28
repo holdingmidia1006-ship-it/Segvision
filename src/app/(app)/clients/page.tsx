@@ -4,6 +4,7 @@ import {
   MapPin,
   Phone,
   Plus,
+  Search,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -11,6 +12,10 @@ import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-dialog";
+import { MaskedInput } from "@/components/ui/masked-input";
+import { Pagination } from "@/components/ui/pagination";
+import { Toast } from "@/components/ui/toast";
 import { createClient, deleteClient } from "@/lib/actions";
 import { getClients, getCurrentProfile, isDemoMode } from "@/lib/data";
 
@@ -19,13 +24,29 @@ export const metadata = { title: "Clientes" };
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; page?: string; q?: string }>;
 }) {
   const clients = await getClients();
   const demo = isDemoMode();
   const profile = demo ? null : await getCurrentProfile();
   const isAdmin = demo || profile?.role === "ADMIN";
   const query = await searchParams;
+  const search = query.q?.trim().toLocaleLowerCase("pt-BR") ?? "";
+  const filtered = clients.filter((client) =>
+    [client.name, client.phone, client.email, client.document]
+      .filter(Boolean)
+      .some((value) => String(value).toLocaleLowerCase("pt-BR").includes(search)),
+  );
+  const pageSize = 12;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(
+    totalPages,
+    Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1),
+  );
+  const visibleClients = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <>
@@ -41,12 +62,34 @@ export default async function ClientsPage({
         }
       />
       {query.created ? (
-        <div className="success-message">Cliente cadastrado com sucesso.</div>
+        <Toast>Cliente cadastrado com sucesso.</Toast>
       ) : null}
 
-      {clients.length ? (
+      <form className="card list-toolbar" role="search">
+        <label className="field">
+          <span>
+            <Search aria-hidden="true" size={14} />
+            Buscar cliente
+          </span>
+          <input
+            name="q"
+            defaultValue={query.q}
+            placeholder="Nome, telefone, documento ou e-mail"
+          />
+        </label>
+        <button className="button button-secondary" type="submit">
+          Buscar
+        </button>
+        {query.q ? (
+          <Link className="button button-ghost" href="/clients">
+            Limpar
+          </Link>
+        ) : null}
+      </form>
+
+      {visibleClients.length ? (
         <section className="list-grid">
-          {clients.map((client) => {
+          {visibleClients.map((client) => {
             const Icon = client.person_type === "PJ" ? Building2 : UserRound;
             const address = client.client_addresses?.find(
               (item) => item.is_primary,
@@ -90,14 +133,14 @@ export default async function ClientsPage({
                   {!demo && isAdmin ? (
                     <form action={deleteClient}>
                       <input type="hidden" name="id" value={client.id} />
-                      <button
-                        className="button button-danger button-small"
-                        type="submit"
-                        aria-label={`Excluir ${client.name}`}
+                      <ConfirmSubmitButton
+                        title={`Excluir ${client.name}?`}
+                        description="Endereços, contatos e visitas vinculados podem ser removidos. Se houver orçamento, o banco bloqueará a exclusão."
+                        confirmLabel="Excluir cliente"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 aria-hidden="true" size={14} />
                         Excluir
-                      </button>
+                      </ConfirmSubmitButton>
                     </form>
                   ) : null}
                   <Link
@@ -115,10 +158,19 @@ export default async function ClientsPage({
         <article className="card">
           <EmptyState
             title="Nenhum cliente cadastrado"
-            description="Comece pelo nome e telefone. Os demais dados são opcionais."
+            description={
+              search
+                ? "Nenhum cliente corresponde à busca. Limpe o filtro e tente novamente."
+                : "Comece pelo nome e telefone. Os demais dados são opcionais."
+            }
           />
         </article>
       )}
+      <Pagination
+        basePath={search ? `/clients?q=${encodeURIComponent(query.q ?? "")}` : "/clients"}
+        currentPage={currentPage}
+        totalPages={totalPages}
+      />
 
       <form
         id="novo-cliente"
@@ -136,7 +188,7 @@ export default async function ClientsPage({
             </label>
             <label className="field">
               Telefone / WhatsApp
-              <input name="phone" type="tel" disabled={demo} />
+              <MaskedInput name="phone" mask="phone" type="tel" disabled={demo} />
             </label>
             <label className="field">
               Tipo
@@ -147,7 +199,7 @@ export default async function ClientsPage({
             </label>
             <label className="field">
               CPF ou CNPJ
-              <input name="document" inputMode="numeric" disabled={demo} />
+              <MaskedInput name="document" mask="document" disabled={demo} />
             </label>
             <label className="field">
               E-mail
@@ -187,7 +239,11 @@ export default async function ClientsPage({
               </label>
               <label className="field">
                 CEP
-                <input name="postal_code" inputMode="numeric" disabled={demo} />
+                <MaskedInput
+                  name="postal_code"
+                  mask="postal-code"
+                  disabled={demo}
+                />
               </label>
               <label className="field">
                 Complemento

@@ -1,8 +1,15 @@
-import { FileCheck2, Info, Plus, ReceiptText } from "lucide-react";
+import { FileCheck2, Info, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { FiscalServiceFields } from "@/components/fiscal-service-fields";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { createFiscalDocument } from "@/lib/actions";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-dialog";
+import { Toast } from "@/components/ui/toast";
+import {
+  createFiscalDocument,
+  deleteFiscalDocument,
+  updateFiscalDocument,
+} from "@/lib/actions";
 import {
   getFiscalDocuments,
   getServices,
@@ -24,7 +31,12 @@ const fiscalStatus: Record<string, string> = {
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; service?: string }>;
+  searchParams: Promise<{
+    created?: string;
+    deleted?: string;
+    service?: string;
+    updated?: string;
+  }>;
 }) {
   const [documents, services] = await Promise.all([
     getFiscalDocuments(),
@@ -50,8 +62,10 @@ export default async function InvoicesPage({
         }
       />
       {query.created ? (
-        <div className="success-message">Documento fiscal preparado.</div>
+        <Toast>Documento fiscal preparado.</Toast>
       ) : null}
+      {query.updated ? <Toast>Documento fiscal atualizado.</Toast> : null}
+      {query.deleted ? <Toast>Documento fiscal excluído.</Toast> : null}
       <div className="notice notice-warn" style={{ marginBottom: 18 }}>
         <Info size={18} />
         <span>
@@ -78,12 +92,13 @@ export default async function InvoicesPage({
                   <th>Status</th>
                   <th>Valor</th>
                   <th>Data</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {documents.map((document) => (
                   <tr key={document.id}>
-                    <td>
+                    <td data-label="Serviço e tomador">
                       <span className="cell-title">
                         {document.services?.title ?? "Serviço"}
                       </span>
@@ -91,8 +106,8 @@ export default async function InvoicesPage({
                         {document.customer_name}
                       </span>
                     </td>
-                    <td>{document.document_type}</td>
-                    <td>
+                    <td data-label="Tipo">{document.document_type}</td>
+                    <td data-label="Status">
                       <span
                         className={`status-badge ${
                           document.status === "EMITIDA"
@@ -107,8 +122,87 @@ export default async function InvoicesPage({
                         {fiscalStatus[document.status]}
                       </span>
                     </td>
-                    <td>{formatCurrency(document.amount)}</td>
-                    <td>{formatDate(document.created_at)}</td>
+                    <td data-label="Valor">{formatCurrency(document.amount)}</td>
+                    <td data-label="Data">{formatDate(document.created_at)}</td>
+                    <td data-label="Ações">
+                      <details className="table-actions">
+                        <summary>Gerenciar</summary>
+                        <form
+                          className="form-grid single-column"
+                          action={updateFiscalDocument}
+                        >
+                          <input type="hidden" name="id" value={document.id} />
+                          <label className="field">
+                            Status
+                            <select
+                              name="status"
+                              defaultValue={document.status}
+                              disabled={demo}
+                            >
+                              {Object.entries(fiscalStatus).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                  {label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="field">
+                            Número
+                            <input
+                              name="number"
+                              defaultValue={document.number ?? ""}
+                              disabled={demo}
+                            />
+                          </label>
+                          <label className="field">
+                            Série
+                            <input
+                              name="series"
+                              defaultValue={document.series ?? ""}
+                              disabled={demo}
+                            />
+                          </label>
+                          <label className="field">
+                            Chave de acesso
+                            <input
+                              name="access_key"
+                              defaultValue={document.access_key ?? ""}
+                              disabled={demo}
+                            />
+                          </label>
+                          <label className="field">
+                            Link de consulta
+                            <input
+                              name="consultation_url"
+                              type="url"
+                              defaultValue={document.consultation_url ?? ""}
+                              disabled={demo}
+                            />
+                          </label>
+                          <label className="field">
+                            Observações
+                            <textarea
+                              name="notes"
+                              defaultValue={document.notes ?? ""}
+                              disabled={demo}
+                            />
+                          </label>
+                          <SubmitButton disabled={demo}>Salvar nota</SubmitButton>
+                        </form>
+                        {!demo ? (
+                          <form className="record-danger" action={deleteFiscalDocument}>
+                            <input type="hidden" name="id" value={document.id} />
+                            <ConfirmSubmitButton
+                              title="Excluir este documento fiscal?"
+                              description="O registro, o XML e o PDF anexados serão removidos. Esta ação não cancela uma nota já emitida no órgão fiscal."
+                              confirmLabel="Excluir registro"
+                            >
+                              <Trash2 aria-hidden="true" size={14} /> Excluir
+                            </ConfirmSubmitButton>
+                          </form>
+                        ) : null}
+                      </details>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -132,22 +226,11 @@ export default async function InvoicesPage({
           <h2>Preparar documento fiscal</h2>
           <p>Este registro não transmite dados para prefeitura ou SEFAZ.</p>
           <div className="form-grid">
-            <label className="field">
-              Serviço
-              <select
-                name="service_id"
-                defaultValue={selectedService?.id ?? ""}
-                required
-                disabled={demo}
-              >
-                <option value="">Selecione</option>
-                {services.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <FiscalServiceFields
+              demo={demo}
+              initialServiceId={selectedService?.id}
+              services={services}
+            />
             <label className="field">
               Tipo de documento
               <select name="document_type" defaultValue="NFSE" disabled={demo}>
@@ -172,26 +255,6 @@ export default async function InvoicesPage({
                 <option value="CANCELADA">Cancelada</option>
                 <option value="ERRO">Erro</option>
               </select>
-            </label>
-            <label className="field">
-              Valor
-              <input
-                name="amount"
-                type="number"
-                min="0"
-                step="0.01"
-                defaultValue={selectedService?.sale_amount}
-                disabled={demo}
-              />
-            </label>
-            <label className="field field-full">
-              Tomador / cliente
-              <input
-                name="customer_name"
-                required
-                defaultValue={selectedService?.clients?.name}
-                disabled={demo}
-              />
             </label>
             <label className="field field-full">
               Descrição fiscal

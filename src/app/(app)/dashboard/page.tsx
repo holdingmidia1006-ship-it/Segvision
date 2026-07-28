@@ -179,7 +179,7 @@ export default async function DashboardPage() {
               <tbody>
                 {recent.map((service) => (
                   <tr key={service.id}>
-                    <td>
+                    <td data-label="Orçamento">
                       <Link
                         className="cell-title"
                         href={`/services/${service.id}`}
@@ -190,11 +190,11 @@ export default async function DashboardPage() {
                         {service.clients?.name ?? "Cliente não informado"}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <StatusBadge status={service.status} pulse />
                     </td>
-                    <td>{formatCurrency(service.sale_amount)}</td>
-                    <td>{formatDate(service.updated_at)}</td>
+                    <td data-label="Valor">{formatCurrency(service.sale_amount)}</td>
+                    <td data-label="Atualizado">{formatDate(service.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>

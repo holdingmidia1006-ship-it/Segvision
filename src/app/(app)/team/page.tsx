@@ -1,9 +1,13 @@
-import { BadgeDollarSign, Phone, Plus, Trash2, UserCog } from "lucide-react";
+import { BadgeDollarSign, Phone, Plus, Search, Trash2, UserCog } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { createEmployee, deleteEmployee } from "@/lib/actions";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-dialog";
+import { MaskedInput } from "@/components/ui/masked-input";
+import { Toast } from "@/components/ui/toast";
+import { createEmployee, deleteEmployee, updateEmployee } from "@/lib/actions";
 import { getCurrentProfile, getEmployees, isDemoMode } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 
@@ -12,7 +16,7 @@ export const metadata = { title: "Equipe" };
 export default async function TeamPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; q?: string; updated?: string }>;
 }) {
   const demo = isDemoMode();
   const profile = demo ? null : await getCurrentProfile();
@@ -20,6 +24,12 @@ export default async function TeamPage({
 
   const employees = await getEmployees();
   const query = await searchParams;
+  const search = query.q?.trim().toLocaleLowerCase("pt-BR") ?? "";
+  const filtered = employees.filter((employee) =>
+    [employee.name, employee.phone, employee.document]
+      .filter(Boolean)
+      .some((value) => String(value).toLocaleLowerCase("pt-BR").includes(search)),
+  );
 
   return (
     <>
@@ -35,12 +45,35 @@ export default async function TeamPage({
         }
       />
       {query.created ? (
-        <div className="success-message">Profissional cadastrado com sucesso.</div>
+        <Toast>Profissional cadastrado com sucesso.</Toast>
       ) : null}
+      {query.updated ? <Toast>Profissional atualizado.</Toast> : null}
 
-      {employees.length ? (
+      <form className="card list-toolbar" role="search">
+        <label className="field">
+          <span>
+            <Search aria-hidden="true" size={14} />
+            Buscar profissional
+          </span>
+          <input
+            name="q"
+            defaultValue={query.q}
+            placeholder="Nome, telefone ou CPF"
+          />
+        </label>
+        <button className="button button-secondary" type="submit">
+          Buscar
+        </button>
+        {query.q ? (
+          <Link className="button button-ghost" href="/team">
+            Limpar
+          </Link>
+        ) : null}
+      </form>
+
+      {filtered.length ? (
         <section className="list-grid">
-          {employees.map((employee) => (
+          {filtered.map((employee) => (
             <article className="entity-card" key={employee.id}>
               <div className="entity-card-top">
                 <div>
@@ -73,13 +106,89 @@ export default async function TeamPage({
                 {!demo ? (
                   <form action={deleteEmployee}>
                     <input type="hidden" name="id" value={employee.id} />
-                    <button className="button button-danger button-small">
-                      <Trash2 size={14} />
+                    <ConfirmSubmitButton
+                      title={`Excluir ${employee.name}?`}
+                      description="A exclusão será bloqueada se o profissional estiver vinculado a um serviço. Prefira inativar cadastros com histórico."
+                      confirmLabel="Excluir profissional"
+                    >
+                      <Trash2 aria-hidden="true" size={14} />
                       Excluir
-                    </button>
+                    </ConfirmSubmitButton>
                   </form>
                 ) : null}
               </div>
+              {!demo ? (
+                <details className="entity-edit">
+                  <summary>Editar profissional</summary>
+                  <form className="form-grid single-column" action={updateEmployee}>
+                    <input type="hidden" name="id" value={employee.id} />
+                    <label className="field">
+                      Nome
+                      <input name="name" defaultValue={employee.name} required />
+                    </label>
+                    <label className="field">
+                      CPF
+                      <MaskedInput
+                        name="document"
+                        mask="document"
+                        defaultValue={employee.document ?? ""}
+                      />
+                    </label>
+                    <label className="field">
+                      Telefone
+                      <MaskedInput
+                        name="phone"
+                        mask="phone"
+                        type="tel"
+                        defaultValue={employee.phone ?? ""}
+                      />
+                    </label>
+                    <label className="field">
+                      Valor da diária
+                      <input
+                        name="daily_rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={employee.daily_rate}
+                      />
+                    </label>
+                    <label className="field">
+                      Valor da meia diária
+                      <input
+                        name="half_daily_rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={employee.half_daily_rate}
+                      />
+                    </label>
+                    <label className="field">
+                      Bonificação padrão
+                      <input
+                        name="default_bonus"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={employee.default_bonus}
+                      />
+                    </label>
+                    <label className="field">
+                      Observações
+                      <textarea name="notes" defaultValue={employee.notes ?? ""} />
+                    </label>
+                    <label className="checkbox-card">
+                      <input
+                        name="active"
+                        type="checkbox"
+                        defaultChecked={employee.active}
+                      />
+                      Disponível para novos serviços
+                    </label>
+                    <SubmitButton>Salvar profissional</SubmitButton>
+                  </form>
+                </details>
+              ) : null}
             </article>
           ))}
         </section>
@@ -87,7 +196,11 @@ export default async function TeamPage({
         <article className="card">
           <EmptyState
             title="Nenhum profissional cadastrado"
-            description="Cadastre a equipe para escalar pessoas nos serviços e preservar o custo histórico."
+            description={
+              search
+                ? "Nenhum profissional corresponde à busca."
+                : "Cadastre a equipe para escalar pessoas nos serviços e preservar o custo histórico."
+            }
           />
         </article>
       )}
@@ -108,11 +221,11 @@ export default async function TeamPage({
             </label>
             <label className="field">
               CPF
-              <input name="document" disabled={demo} />
+              <MaskedInput name="document" mask="document" disabled={demo} />
             </label>
             <label className="field">
               Telefone
-              <input name="phone" disabled={demo} />
+              <MaskedInput name="phone" mask="phone" type="tel" disabled={demo} />
             </label>
             <label className="field">
               Valor da diária
