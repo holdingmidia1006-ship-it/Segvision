@@ -1982,7 +1982,7 @@ textarea:disabled {
 }
 
 .service-value span {
-  color: #7a899b;
+  color: var(--muted);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1990,7 +1990,7 @@ textarea:disabled {
 
 .service-value strong {
   margin-top: 5px;
-  color: #173f78;
+  color: var(--blue-deep);
   font-size: 24px;
 }
 
@@ -2040,16 +2040,16 @@ textarea:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 15px;
-  color: #5b6d82;
+  color: var(--muted);
   font-size: 12px;
 }
 
 .financial-row strong {
-  color: #253a55;
+  color: var(--foreground);
 }
 
 .financial-total {
-  border-top: 1px solid #dfe6ef;
+  border-top: 1px solid var(--line);
   padding-top: 12px;
   font-size: 14px;
 }
@@ -2069,7 +2069,7 @@ textarea:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 1px solid #edf1f5;
+  border-bottom: 1px solid var(--line-soft);
   padding: 12px 0;
 }
 
@@ -2079,14 +2079,14 @@ textarea:disabled {
 
 .simple-list-item strong {
   display: block;
-  color: #2e425c;
+  color: var(--foreground);
   font-size: 12px;
 }
 
 .simple-list-item span {
   display: block;
   margin-top: 3px;
-  color: #7d8c9f;
+  color: var(--muted);
   font-size: 10px;
 }
 
