@@ -1156,6 +1156,12 @@ textarea:disabled {
   font-weight: 800;
 }
 
+.workflow-step .workflow-step-number {
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
 .workflow-step strong,
 .workflow-step span {
   display: block;
