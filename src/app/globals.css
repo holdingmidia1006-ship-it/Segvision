@@ -1972,6 +1972,13 @@ textarea:disabled {
   font-size: 12px;
 }
 
+.service-description {
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
 .service-value {
   text-align: right;
 }

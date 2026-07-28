@@ -164,16 +164,7 @@ export default async function ServiceDetailPage({
                 </div>
               </div>
               {service.description ? (
-                <p
-                  style={{
-                    margin: "20px 0 0",
-                    color: "#5f7187",
-                    fontSize: 12,
-                    lineHeight: 1.65,
-                  }}
-                >
-                  {service.description}
-                </p>
+                <p className="service-description">{service.description}</p>
               ) : null}
             </div>
             <details className="card-disclosure">
