@@ -120,7 +120,10 @@ export type Service = {
   origin_visit_id?: string | null;
   created_at: string;
   updated_at: string;
-  clients?: Pick<Client, "id" | "name" | "phone" | "document"> | null;
+  clients?: Pick<
+    Client,
+    "id" | "name" | "phone" | "document" | "client_addresses"
+  > | null;
   service_types?: Pick<ServiceType, "id" | "name"> | null;
   service_costs?: ServiceCost[];
   service_items?: ServiceItem[];

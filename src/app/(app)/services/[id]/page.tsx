@@ -320,10 +320,10 @@ export default async function ServiceDetailPage({
             <div className="card-body detail-stack">
               <a
                 className="button button-primary button-full"
-                href={`/api/services/${service.id}/quote`}
+                href={`/api/services/${service.id}/quote/pdf`}
               >
                 <Download size={16} />
-                Gerar orçamento Word
+                Baixar PDF SEG VISIOM
               </a>
               <Link
                 className="button button-secondary button-full"

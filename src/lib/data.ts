@@ -311,7 +311,7 @@ export async function getService(id: string) {
   const { data } = await supabase
     .from("services")
     .select(
-      "*, clients(id,name,phone,document), service_types(id,name), service_costs(*), service_items(*), service_employees(*, employees(id,name,phone))",
+      "*, clients(id,name,phone,document,client_addresses(*)), service_types(id,name), service_costs(*), service_items(*), service_employees(*, employees(id,name,phone))",
     )
     .eq("id", id)
     .single();
