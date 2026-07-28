@@ -3384,6 +3384,71 @@ textarea:disabled {
   color: var(--muted);
 }
 
+@media (min-width: 901px) and (max-width: 1400px) {
+  .kanban {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+}
+
+@media (min-width: 651px) and (max-width: 900px) {
+  .kanban-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .kanban-tabs button {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--muted);
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 680;
+  }
+
+  .kanban-tabs button.active {
+    border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
+    background: color-mix(in srgb, var(--blue) 13%, var(--surface));
+    color: var(--blue-deep);
+    box-shadow: inset 3px 0 var(--blue);
+  }
+
+  .kanban-tabs strong {
+    display: grid;
+    min-width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    color: var(--foreground);
+    font-size: 11px;
+  }
+
+  .kanban {
+    display: block;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .kanban-column {
+    display: none;
+    min-height: 0;
+  }
+
+  .kanban-column[data-active="true"] {
+    display: block;
+  }
+}
+
 /* Final responsive overrides: operational views never scroll horizontally. */
 
 .kanban-tabs {
