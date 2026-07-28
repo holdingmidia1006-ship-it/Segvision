@@ -13,7 +13,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
-import { addServiceCost, updateServiceStatus } from "@/lib/actions";
+import {
+  addServiceCost,
+  addServiceItem,
+  updateServiceCommercialTerms,
+  updateServiceStatus,
+} from "@/lib/actions";
 import { getService, isDemoMode } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -31,7 +36,12 @@ export default async function ServiceDetailPage({
   const demo = isDemoMode();
   const costs = service.service_costs ?? [];
   const realCost = costs.reduce((sum, cost) => sum + Number(cost.amount), 0);
-  const margin = Number(service.sale_amount) - realCost;
+  const totalFinal =
+    Number(service.total_final) ||
+    Number(service.sale_amount) +
+      Number(service.additional_amount ?? 0) -
+      Number(service.discount_amount ?? 0);
+  const margin = totalFinal - realCost;
 
   return (
     <>
@@ -57,8 +67,8 @@ export default async function ServiceDetailPage({
           </p>
         </div>
         <div className="service-value">
-          <span>Valor do serviço</span>
-          <strong>{formatCurrency(service.sale_amount)}</strong>
+          <span>Total do orçamento</span>
+          <strong>{formatCurrency(totalFinal)}</strong>
         </div>
       </section>
 
@@ -160,6 +170,56 @@ export default async function ServiceDetailPage({
                   Nenhum item detalhado neste serviço.
                 </span>
               )}
+              <form
+                action={addServiceItem}
+                className="form-grid"
+                style={{ marginTop: 20 }}
+              >
+                <input type="hidden" name="service_id" value={service.id} />
+                <label className="field field-full">
+                  Novo item
+                  <input name="description" required disabled={demo} />
+                </label>
+                <label className="field">
+                  Quantidade
+                  <input
+                    name="quantity"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    defaultValue="1"
+                    required
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Unidade
+                  <input name="unit" defaultValue="un" disabled={demo} />
+                </label>
+                <label className="field">
+                  Valor unitário
+                  <input
+                    name="unit_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Custo interno unitário
+                  <input
+                    name="unit_cost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue="0"
+                    disabled={demo}
+                  />
+                </label>
+                <SubmitButton disabled={demo}>Adicionar item</SubmitButton>
+              </form>
             </div>
           </article>
 
@@ -233,6 +293,100 @@ export default async function ServiceDetailPage({
           <article className="card">
             <div className="card-header">
               <div>
+                <h2>Condições comerciais</h2>
+                <p>Estes valores e textos alimentam o PDF.</p>
+              </div>
+            </div>
+            <form className="card-body" action={updateServiceCommercialTerms}>
+              <input type="hidden" name="service_id" value={service.id} />
+              <div className="form-grid" style={{ gridTemplateColumns: "1fr" }}>
+                <label className="field">
+                  Valor de venda
+                  <input
+                    name="sale_amount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    defaultValue={service.sale_amount}
+                    required
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Desconto
+                  <input
+                    name="discount_amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={service.discount_amount ?? 0}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Acréscimo
+                  <input
+                    name="additional_amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={service.additional_amount ?? 0}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Linha de serviços
+                  <input
+                    name="service_line_label"
+                    defaultValue={
+                      service.service_line_label ?? "Mão de obra e Serviços"
+                    }
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Validade
+                  <input
+                    name="valid_until"
+                    type="date"
+                    defaultValue={service.valid_until ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Forma de pagamento
+                  <textarea
+                    name="payment_terms"
+                    defaultValue={service.payment_terms ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Prazo de execução
+                  <textarea
+                    name="execution_deadline"
+                    defaultValue={service.execution_deadline ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+                <label className="field">
+                  Garantia
+                  <textarea
+                    name="warranty_terms"
+                    defaultValue={service.warranty_terms ?? ""}
+                    disabled={demo}
+                  />
+                </label>
+              </div>
+              <SubmitButton className="button-full" disabled={demo}>
+                Salvar e criar nova versão
+              </SubmitButton>
+            </form>
+          </article>
+
+          <article className="card">
+            <div className="card-header">
+              <div>
                 <h2>Previsto x real</h2>
                 <p>O resultado financeiro deste trabalho.</p>
               </div>
@@ -241,6 +395,18 @@ export default async function ServiceDetailPage({
               <div className="financial-row">
                 <span>Venda</span>
                 <strong>{formatCurrency(service.sale_amount)}</strong>
+              </div>
+              <div className="financial-row">
+                <span>Desconto</span>
+                <strong>{formatCurrency(service.discount_amount ?? 0)}</strong>
+              </div>
+              <div className="financial-row">
+                <span>Acréscimo</span>
+                <strong>{formatCurrency(service.additional_amount ?? 0)}</strong>
+              </div>
+              <div className="financial-row">
+                <span>Total final</span>
+                <strong>{formatCurrency(totalFinal)}</strong>
               </div>
               <div className="financial-row">
                 <span>Custo previsto</span>
@@ -260,8 +426,8 @@ export default async function ServiceDetailPage({
           <article className="card">
             <div className="card-header">
               <div>
-                <h2>Custo interno</h2>
-                <p>Não aparece no orçamento do cliente.</p>
+                <h2>Custo do serviço</h2>
+                <p>Só aparece no PDF quando for marcado como repasse.</p>
               </div>
               <PlusCircle size={19} color="#60758f" />
             </div>
@@ -308,6 +474,14 @@ export default async function ServiceDetailPage({
                     defaultValue={new Date().toISOString().slice(0, 10)}
                     disabled={demo}
                   />
+                </label>
+                <label className="checkbox-card">
+                  <input
+                    type="checkbox"
+                    name="visible_to_customer"
+                    disabled={demo}
+                  />
+                  <span>Repassar e mostrar no PDF do cliente</span>
                 </label>
               </div>
               <SubmitButton className="button-full" disabled={demo}>

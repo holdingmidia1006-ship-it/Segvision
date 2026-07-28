@@ -1,4 +1,5 @@
-import { getService } from "@/lib/data";
+import { getCompanySettings, getService } from "@/lib/data";
+import { QuoteValidationError } from "@/lib/quote/calculations";
 import { renderSegvisionQuotePdf } from "@/lib/quote/segvisiom-pdf";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -18,9 +19,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const service = await getService(id);
-  if (!service) return new Response("Servico nao encontrado.", { status: 404 });
-
   const supabase = await createServerSupabase();
   let userId: string | null = null;
   if (supabase) {
@@ -31,8 +29,22 @@ export async function GET(
     userId = user.id;
   }
 
-  const output = await renderSegvisionQuotePdf(service);
-  const fileName = `orcamento-seg-visiom-${slug(service.title)}.pdf`;
+  const [service, company] = await Promise.all([
+    getService(id),
+    getCompanySettings(),
+  ]);
+  if (!service) return new Response("Serviço não encontrado.", { status: 404 });
+
+  let output: Buffer;
+  try {
+    output = await renderSegvisionQuotePdf(service, company);
+  } catch (error) {
+    if (error instanceof QuoteValidationError) {
+      return new Response(error.message, { status: 422 });
+    }
+    throw error;
+  }
+  const fileName = `${service.quote_number ?? "orcamento"}-v${service.quote_version ?? 1}-${slug(service.clients?.name ?? service.title)}.pdf`;
 
   if (supabase) {
     const storagePath = `${service.id}/${Date.now()}-${fileName}`;
@@ -50,6 +62,14 @@ export async function GET(
         name: fileName,
         storage_path: storagePath,
         created_by: userId,
+        quote_number: service.quote_number,
+        quote_version: service.quote_version ?? 1,
+        total_amount:
+          Number(service.total_final) ||
+          Number(service.sale_amount) +
+            Number(service.additional_amount ?? 0) -
+            Number(service.discount_amount ?? 0),
+        service_status: service.status,
       });
     if (insertError) throw insertError;
   }

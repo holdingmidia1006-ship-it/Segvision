@@ -85,6 +85,31 @@ export type ServiceItem = {
   unit_price: number;
   unit_cost: number;
   total_price: number;
+  position?: number;
+};
+
+export type CompanySettings = {
+  id: boolean;
+  legal_name: string;
+  trade_name: string;
+  document: string;
+  phone: string | null;
+  email: string | null;
+  instagram: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  district: string | null;
+  city: string;
+  state: string;
+  postal_code: string | null;
+  responsible_name: string | null;
+  responsible_role: string | null;
+  banner_path: string;
+  default_validity_days: number;
+  default_payment_terms: string | null;
+  default_execution_deadline: string | null;
+  default_warranty_terms: string | null;
 };
 
 export type ServiceEmployee = {
@@ -111,6 +136,16 @@ export type Service = {
   internal_notes: string | null;
   status: ServiceStatus;
   sale_amount: number;
+  quote_number?: string;
+  quote_version?: number;
+  discount_amount?: number;
+  additional_amount?: number;
+  total_final?: number;
+  service_line_label?: string;
+  payment_terms?: string | null;
+  execution_deadline?: string | null;
+  warranty_terms?: string | null;
+  valid_until?: string | null;
   estimated_cost_amount: number;
   estimated_start_at: string | null;
   estimated_end_at: string | null;
@@ -122,7 +157,7 @@ export type Service = {
   updated_at: string;
   clients?: Pick<
     Client,
-    "id" | "name" | "phone" | "document" | "client_addresses"
+    "id" | "name" | "phone" | "email" | "document" | "client_addresses"
   > | null;
   service_types?: Pick<ServiceType, "id" | "name"> | null;
   service_costs?: ServiceCost[];
@@ -246,6 +281,10 @@ export type GeneratedDocument = {
   service_id: string;
   name: string;
   storage_path: string;
+  quote_number?: string | null;
+  quote_version?: number | null;
+  total_amount?: number | null;
+  service_status?: ServiceStatus | null;
   created_at: string;
   services?: Pick<Service, "id" | "title"> | null;
   signed_url?: string | null;

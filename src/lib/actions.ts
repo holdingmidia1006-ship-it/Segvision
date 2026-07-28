@@ -146,12 +146,32 @@ export async function createService(formData: FormData) {
   const input = {
     title: requiredText.parse(formData.get("title")),
     client_id: z.string().uuid().parse(formData.get("client_id")),
+    client_address_id:
+      z.string().uuid().safeParse(formData.get("client_address_id")).data ?? null,
     service_type_id:
       z.string().uuid().safeParse(formData.get("service_type_id")).data ?? null,
     description: optionalText.parse(formData.get("description")),
     customer_notes: optionalText.parse(formData.get("customer_notes")),
     internal_notes: optionalText.parse(formData.get("internal_notes")),
-    sale_amount: numberValue(formData.get("sale_amount")),
+    sale_amount: z
+      .number()
+      .positive()
+      .parse(numberValue(formData.get("sale_amount"))),
+    discount_amount: z
+      .number()
+      .nonnegative()
+      .parse(numberValue(formData.get("discount_amount"))),
+    additional_amount: z
+      .number()
+      .nonnegative()
+      .parse(numberValue(formData.get("additional_amount"))),
+    service_line_label:
+      optionalText.parse(formData.get("service_line_label")) ??
+      "Mão de obra e Serviços",
+    payment_terms: optionalText.parse(formData.get("payment_terms")),
+    execution_deadline: optionalText.parse(formData.get("execution_deadline")),
+    warranty_terms: optionalText.parse(formData.get("warranty_terms")),
+    valid_until: String(formData.get("valid_until") ?? "") || null,
     estimated_cost_amount: numberValue(formData.get("estimated_cost_amount")),
     estimated_start_at:
       String(formData.get("estimated_start_at") ?? "") || null,
@@ -160,6 +180,32 @@ export async function createService(formData: FormData) {
       z.string().uuid().safeParse(formData.get("origin_visit_id")).data ?? null,
   };
   const { supabase, user } = await requireSession();
+  if (input.discount_amount > input.sale_amount + input.additional_amount) {
+    throw new Error(
+      "O desconto não pode superar o valor de venda somado ao acréscimo.",
+    );
+  }
+  if (input.client_address_id) {
+    const { data: address, error: addressError } = await supabase
+      .from("client_addresses")
+      .select("id")
+      .eq("id", input.client_address_id)
+      .eq("client_id", input.client_id)
+      .maybeSingle();
+    if (addressError) throw addressError;
+    if (!address) {
+      throw new Error("O endereço selecionado não pertence ao cliente.");
+    }
+  }
+  const itemDescription = requiredText.parse(formData.get("item_description"));
+  const quantity = z
+    .number()
+    .positive()
+    .parse(numberValue(formData.get("item_quantity")));
+  const unitPrice = z
+    .number()
+    .nonnegative()
+    .parse(numberValue(formData.get("item_unit_price")));
   const { data: service, error } = await supabase
     .from("services")
     .insert({ ...input, created_by: user.id })
@@ -191,21 +237,19 @@ export async function createService(formData: FormData) {
     if (assignmentError) throw assignmentError;
   }
 
-  const itemDescription = String(formData.get("item_description") ?? "").trim();
-  if (itemDescription) {
-    const quantity = numberValue(formData.get("item_quantity")) || 1;
-    const unitPrice = numberValue(formData.get("item_unit_price"));
-    const { error: itemError } = await supabase.from("service_items").insert({
-      service_id: service.id,
-      description: itemDescription,
-      unit: String(formData.get("item_unit") ?? "un"),
-      quantity,
-      unit_price: unitPrice,
-      unit_cost: numberValue(formData.get("item_unit_cost")),
-      total_price: quantity * unitPrice,
-    });
-    if (itemError) throw itemError;
-  }
+  const { error: itemError } = await supabase.from("service_items").insert({
+    service_id: service.id,
+    description: itemDescription,
+    unit: String(formData.get("item_unit") ?? "un"),
+    quantity,
+    unit_price: unitPrice,
+    unit_cost: z
+      .number()
+      .nonnegative()
+      .parse(numberValue(formData.get("item_unit_cost"))),
+    total_price: quantity * unitPrice,
+  });
+  if (itemError) throw itemError;
 
   revalidatePath("/services");
   revalidatePath("/dashboard");
@@ -496,6 +540,7 @@ export async function addServiceCost(formData: FormData) {
     description: optionalText.parse(formData.get("description")),
     amount: z.number().positive().parse(numberValue(formData.get("amount"))),
     cost_date: String(formData.get("cost_date") ?? new Date().toISOString().slice(0, 10)),
+    visible_to_customer: formData.get("visible_to_customer") === "on",
   };
   const { supabase, user } = await requireSession();
   const { error } = await supabase
@@ -504,6 +549,87 @@ export async function addServiceCost(formData: FormData) {
   if (error) throw error;
   revalidatePath(`/services/${serviceId}`);
   revalidatePath("/dashboard");
+}
+
+export async function addServiceItem(formData: FormData) {
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const quantity = z
+    .number()
+    .positive()
+    .parse(numberValue(formData.get("quantity")));
+  const unitPrice = z
+    .number()
+    .nonnegative()
+    .parse(numberValue(formData.get("unit_price")));
+  const { supabase } = await requireSession();
+  const { data: lastItem } = await supabase
+    .from("service_items")
+    .select("position")
+    .eq("service_id", serviceId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const { error } = await supabase.from("service_items").insert({
+    service_id: serviceId,
+    description: requiredText.parse(formData.get("description")),
+    unit: optionalText.parse(formData.get("unit")) ?? "un",
+    quantity,
+    unit_price: unitPrice,
+    unit_cost: z
+      .number()
+      .nonnegative()
+      .parse(numberValue(formData.get("unit_cost"))),
+    total_price: quantity * unitPrice,
+    position: Number(lastItem?.position ?? -1) + 1,
+  });
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
+}
+
+export async function updateServiceCommercialTerms(formData: FormData) {
+  const serviceId = z.string().uuid().parse(formData.get("service_id"));
+  const saleAmount = z
+    .number()
+    .positive()
+    .parse(numberValue(formData.get("sale_amount")));
+  const discountAmount = z
+    .number()
+    .nonnegative()
+    .parse(numberValue(formData.get("discount_amount")));
+  const additionalAmount = z
+    .number()
+    .nonnegative()
+    .parse(numberValue(formData.get("additional_amount")));
+  if (discountAmount > saleAmount + additionalAmount) {
+    throw new Error(
+      "O desconto não pode superar o valor de venda somado ao acréscimo.",
+    );
+  }
+  const { supabase } = await requireSession();
+  const { data: currentService, error: currentServiceError } = await supabase
+    .from("services")
+    .select("quote_version")
+    .eq("id", serviceId)
+    .single();
+  if (currentServiceError) throw currentServiceError;
+  const { error } = await supabase
+    .from("services")
+    .update({
+      sale_amount: saleAmount,
+      discount_amount: discountAmount,
+      additional_amount: additionalAmount,
+      service_line_label:
+        optionalText.parse(formData.get("service_line_label")) ??
+        "Mão de obra e Serviços",
+      payment_terms: optionalText.parse(formData.get("payment_terms")),
+      execution_deadline: optionalText.parse(formData.get("execution_deadline")),
+      warranty_terms: optionalText.parse(formData.get("warranty_terms")),
+      valid_until: String(formData.get("valid_until") ?? "") || null,
+      quote_version: Number(currentService.quote_version ?? 1) + 1,
+    })
+    .eq("id", serviceId);
+  if (error) throw error;
+  revalidatePath(`/services/${serviceId}`);
 }
 
 export async function createFiscalDocument(formData: FormData) {

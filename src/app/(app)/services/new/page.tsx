@@ -24,6 +24,8 @@ export default async function NewServicePage({
     getServiceTypes(),
   ]);
   const demo = isDemoMode();
+  const defaultValidity = new Date();
+  defaultValidity.setDate(defaultValidity.getDate() + 10);
 
   return (
     <>
@@ -70,6 +72,19 @@ export default async function NewServicePage({
               </select>
             </label>
             <label className="field">
+              Endereço do serviço
+              <select name="client_address_id" disabled={demo}>
+                <option value="">Usar endereço principal do cliente</option>
+                {clients.flatMap((client) =>
+                  (client.client_addresses ?? []).map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {client.name}: {address.label} - {address.street}
+                    </option>
+                  )),
+                )}
+              </select>
+            </label>
+            <label className="field">
               Tipo de serviço
               <select name="service_type_id" disabled={demo}>
                 <option value="">Selecione</option>
@@ -87,6 +102,7 @@ export default async function NewServicePage({
                 type="number"
                 min="0"
                 step="0.01"
+                required
                 disabled={demo}
               />
             </label>
@@ -113,6 +129,79 @@ export default async function NewServicePage({
               <textarea
                 name="description"
                 placeholder="Explique o que será feito."
+                disabled={demo}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3>Condições comerciais do PDF</h3>
+          <p>
+            O valor de venda é o subtotal comercial. Desconto e acréscimo são
+            aplicados somente no total final.
+          </p>
+          <div className="form-grid">
+            <label className="field">
+              Desconto explícito
+              <input
+                name="discount_amount"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue="0"
+                disabled={demo}
+              />
+            </label>
+            <label className="field">
+              Acréscimo explícito
+              <input
+                name="additional_amount"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue="0"
+                disabled={demo}
+              />
+            </label>
+            <label className="field">
+              Validade
+              <input
+                name="valid_until"
+                type="date"
+                defaultValue={defaultValidity.toISOString().slice(0, 10)}
+                disabled={demo}
+              />
+            </label>
+            <label className="field">
+              Nome da linha de serviços
+              <input
+                name="service_line_label"
+                defaultValue="Mão de obra e Serviços"
+                disabled={demo}
+              />
+            </label>
+            <label className="field">
+              Forma de pagamento
+              <input
+                name="payment_terms"
+                defaultValue="Formas de pagamento a combinar."
+                disabled={demo}
+              />
+            </label>
+            <label className="field">
+              Prazo de execução
+              <input
+                name="execution_deadline"
+                defaultValue="Prazo de execução a combinar após a aprovação."
+                disabled={demo}
+              />
+            </label>
+            <label className="field field-full">
+              Garantia
+              <input
+                name="warranty_terms"
+                defaultValue="Garantia dos serviços conforme legislação vigente."
                 disabled={demo}
               />
             </label>
@@ -148,6 +237,7 @@ export default async function NewServicePage({
               <input
                 name="item_description"
                 placeholder="Ex.: Câmera IP 4MP instalada"
+                required
                 disabled={demo}
               />
             </label>
@@ -173,6 +263,7 @@ export default async function NewServicePage({
                 type="number"
                 min="0"
                 step="0.01"
+                required
                 disabled={demo}
               />
             </label>

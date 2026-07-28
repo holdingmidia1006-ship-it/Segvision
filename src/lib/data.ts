@@ -14,6 +14,7 @@ import type {
   CalendarEvent,
   Client,
   ClientHistoryEvent,
+  CompanySettings,
   Employee,
   FiscalDocument,
   GeneratedDocument,
@@ -311,12 +312,48 @@ export async function getService(id: string) {
   const { data } = await supabase
     .from("services")
     .select(
-      "*, clients(id,name,phone,document,client_addresses(*)), service_types(id,name), service_costs(*), service_items(*), service_employees(*, employees(id,name,phone))",
+      "*, clients(id,name,phone,email,document,client_addresses(*)), service_types(id,name), service_costs(*), service_items(*), service_employees(*, employees(id,name,phone))",
     )
     .eq("id", id)
     .single();
 
   return (data as Service | null) ?? null;
+}
+
+export async function getCompanySettings() {
+  const fallback: CompanySettings = {
+    id: true,
+    legal_name: "Glaucione Segurado de Miranda Vasconcelos",
+    trade_name: "SEG VISIOM",
+    document: "27.491.886/0001-70",
+    phone: "(62) 98443-4663",
+    email: null,
+    instagram: "@SegVisiom",
+    street: "R. Valença",
+    number: "S/N, Qd.111 Lt.16",
+    complement: null,
+    district: "Set. Leste Universitário",
+    city: "Goiânia",
+    state: "GO",
+    postal_code: "74615-280",
+    responsible_name: "Leonardo Cândido Vasconcelos",
+    responsible_role: "Técnico em Telecomunicação e Elétrica",
+    banner_path: "/segvisiom/banner-header-segvisiom.png",
+    default_validity_days: 10,
+    default_payment_terms: "Formas de pagamento a combinar.",
+    default_execution_deadline:
+      "Prazo de execução a combinar após a aprovação.",
+    default_warranty_terms:
+      "Garantia dos serviços conforme legislação vigente.",
+  };
+  const supabase = await createServerSupabase();
+  if (!supabase) return fallback;
+  const { data } = await supabase
+    .from("company_settings")
+    .select("*")
+    .eq("id", true)
+    .maybeSingle();
+  return (data as CompanySettings | null) ?? fallback;
 }
 
 export async function getFiscalDocuments() {
