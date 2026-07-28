@@ -691,6 +691,19 @@ textarea:disabled {
   min-width: 0;
 }
 
+.dashboard-grid .data-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.dashboard-grid .data-table :is(th, td) {
+  overflow-wrap: anywhere;
+}
+
+.dashboard-grid .inline-actions {
+  flex-wrap: wrap;
+}
+
 .table-wrap {
   width: 100%;
   max-width: 100%;
