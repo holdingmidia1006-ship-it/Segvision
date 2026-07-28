@@ -1,5 +1,6 @@
-import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { redirect } from "next/navigation";
+import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "@/components/login-form";
 import {
   createServerSupabase,
@@ -28,27 +29,24 @@ export default async function LoginPage({
     <main className="login-page">
       <section className="login-visual">
         <div className="login-brand">
-          <div className="brand-mark">
-            <ShieldCheck size={23} />
-          </div>
-          <strong>Eupresa Gestão</strong>
+          <BrandLogo variant="horizontal" priority />
         </div>
         <div className="login-copy">
-          <h1>Do orçamento ao resultado real.</h1>
+          <h1>Tecnologia em movimento, do orçamento ao campo.</h1>
           <p>
-            Um sistema simples para organizar clientes, equipe, serviços,
-            custos, documentos e decisões sem depender da memória.
+            Centralize clientes, equipe, visitas, serviços, custos e documentos
+            em uma operação SEG VISIOM conectada.
           </p>
         </div>
         <div className="login-points">
           <span>
-            <CheckCircle2 size={15} /> Controle operacional
+            <CheckCircle2 size={15} /> Segurança em campo
           </span>
           <span>
-            <CheckCircle2 size={15} /> Margem por serviço
+            <CheckCircle2 size={15} /> Gestão operacional
           </span>
           <span>
-            <CheckCircle2 size={15} /> Dados protegidos
+            <CheckCircle2 size={15} /> Equipe conectada
           </span>
         </div>
       </section>

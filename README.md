@@ -1,7 +1,7 @@
-# Eupresa Gestão
+# SEG VISIOM
 
-Sistema interno para uma empresa de instalações controlar clientes, equipe,
-orçamentos, serviços, custos reais, documentos e preparação fiscal.
+Plataforma de gestão de campo da SEG VISIOM para controlar clientes, equipe,
+visitas, orçamentos, serviços, custos, documentos e preparação fiscal.
 
 ## Stack
 
@@ -20,6 +20,7 @@ orçamentos, serviços, custos reais, documentos e preparação fiscal.
 - Snapshots de valores de equipe e itens
 - Custos internos por categoria e margem real
 - Quadro por status com indicadores acessíveis
+- Geração de orçamento PDF com a identidade visual SEG VISIOM
 - Geração de orçamento `.docx`
 - Template Word privado no Supabase Storage
 - Dashboard operacional e financeiro

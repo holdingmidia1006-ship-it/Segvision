@@ -2,6 +2,7 @@
 
 import { LoaderCircle, LockKeyhole } from "lucide-react";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
 export function ResetPasswordForm() {
@@ -37,6 +38,7 @@ export function ResetPasswordForm() {
 
   return (
     <form className="login-card" onSubmit={submit}>
+      <BrandLogo className="login-card-brand" variant="symbol" priority />
       <div className="login-card-icon"><LockKeyhole size={22} /></div>
       <h2>Definir nova senha</h2>
       <p>Crie uma senha forte com pelo menos oito caracteres.</p>

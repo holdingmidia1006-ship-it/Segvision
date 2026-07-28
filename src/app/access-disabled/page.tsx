@@ -1,4 +1,5 @@
 import { ShieldX } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { signOut } from "@/lib/actions";
 
 export const metadata = { title: "Acesso desativado" };
@@ -8,6 +9,7 @@ export default function AccessDisabledPage() {
     <main className="login-page">
       <section className="login-panel" style={{ margin: "auto" }}>
         <div className="login-card">
+          <BrandLogo className="login-card-brand" variant="symbol" priority />
           <div className="login-card-icon">
             <ShieldX size={22} />
           </div>

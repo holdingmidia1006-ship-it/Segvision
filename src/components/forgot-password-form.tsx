@@ -3,6 +3,7 @@
 import { ArrowLeft, LoaderCircle, MailCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { getAppUrl } from "@/lib/site-url";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
@@ -35,6 +36,7 @@ export function ForgotPasswordForm() {
 
   return (
     <form className="login-card" onSubmit={submit}>
+      <BrandLogo className="login-card-brand" variant="symbol" priority />
       <div className="login-card-icon"><MailCheck size={22} /></div>
       <h2>Recuperar conta</h2>
       <p>Informe o e-mail usado no sistema para receber o link de redefinição.</p>

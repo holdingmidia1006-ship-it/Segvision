@@ -2,15 +2,17 @@
 
 :root {
   --background: #f4f7fb;
-  --foreground: #182336;
-  --navy: #10233f;
-  --navy-soft: #1a355c;
-  --blue: #2563eb;
+  --foreground: #142238;
+  --navy: #071a33;
+  --navy-soft: #102e52;
+  --blue: #087cf0;
+  --blue-deep: #075bc8;
+  --blue-bright: #08a5ff;
   --green: #109c6d;
-  --line: #dfe6ef;
+  --line: #dbe5f1;
   --muted: #64748b;
   --surface: #ffffff;
-  --shadow: 0 12px 30px rgba(20, 39, 70, 0.08);
+  --shadow: 0 12px 30px rgba(7, 26, 51, 0.1);
 }
 
 @theme inline {
@@ -31,6 +33,7 @@ body {
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background: var(--background);
   color: var(--foreground);
   font-family: "Geist", "Geist Fallback", Arial, sans-serif;
@@ -52,6 +55,7 @@ a {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 button:disabled,
@@ -60,6 +64,11 @@ select:disabled,
 textarea:disabled {
   cursor: not-allowed;
   opacity: 0.62;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(8, 165, 255, 0.42);
+  outline-offset: 2px;
 }
 
 .app-shell {
@@ -76,7 +85,7 @@ textarea:disabled {
   flex-direction: column;
   overflow-y: auto;
   background:
-    radial-gradient(circle at 15% 0%, rgba(68, 120, 190, 0.28), transparent 28%),
+    radial-gradient(circle at 10% 0%, rgba(8, 124, 240, 0.3), transparent 30%),
     var(--navy);
   color: #fff;
   padding: 24px 18px 18px;
@@ -85,18 +94,53 @@ textarea:disabled {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0 6px 26px;
 }
 
-.brand-mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 13px;
-  background: linear-gradient(145deg, #52d7ab, #179b73);
-  box-shadow: 0 8px 20px rgba(13, 169, 116, 0.28);
+.brand-home {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+.brand-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-logo-symbol {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+}
+
+.brand-logo-horizontal {
+  width: 310px;
+  max-width: 100%;
+  aspect-ratio: 2 / 1;
+  border-radius: 0;
+}
+
+.brand-logo-sidebar {
+  width: 48px;
+  height: 48px;
 }
 
 .brand strong,
@@ -105,8 +149,8 @@ textarea:disabled {
 }
 
 .brand strong {
-  font-size: 18px;
-  letter-spacing: -0.02em;
+  font-size: 17px;
+  letter-spacing: 0.025em;
 }
 
 .brand span {
@@ -117,6 +161,8 @@ textarea:disabled {
 
 .mobile-close {
   display: none;
+  width: 44px;
+  height: 44px;
   margin-left: auto;
   border: 0;
   background: transparent;
@@ -141,7 +187,7 @@ textarea:disabled {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 44px;
+  min-height: 48px;
   border-radius: 11px;
   color: #b8c7da;
   padding: 0 12px;
@@ -162,7 +208,7 @@ textarea:disabled {
 .nav-link-active {
   background: rgba(255, 255, 255, 0.11);
   color: white;
-  box-shadow: inset 3px 0 #50d6ab;
+  box-shadow: inset 3px 0 var(--blue-bright);
 }
 
 .sidebar-help {
@@ -177,7 +223,7 @@ textarea:disabled {
 }
 
 .sidebar-help svg {
-  color: #63dfb6;
+  color: var(--blue-bright);
 }
 
 .sidebar-help strong {
@@ -235,6 +281,8 @@ textarea:disabled {
 
 .user-card button {
   display: grid;
+  width: 44px;
+  height: 44px;
   border: 0;
   background: transparent;
   color: #8fa4c1;
@@ -242,6 +290,7 @@ textarea:disabled {
 }
 
 .main-column {
+  min-width: 0;
   width: calc(100% - 260px);
   min-height: 100vh;
   margin-left: 260px;
@@ -256,6 +305,20 @@ textarea:disabled {
 
 .mobile-topbar {
   display: none;
+}
+
+.mobile-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.mobile-brand .brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 0;
+  filter: none;
 }
 
 .demo-banner {
@@ -299,7 +362,7 @@ textarea:disabled {
 
 .eyebrow {
   margin: 0;
-  color: #287a64;
+  color: var(--blue-deep);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -334,12 +397,12 @@ textarea:disabled {
 .button-primary {
   background: var(--blue);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 8px 18px rgba(8, 124, 240, 0.2);
 }
 
 .button-primary:hover:not(:disabled) {
-  background: #1d55d5;
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+  background: var(--blue-deep);
+  box-shadow: 0 10px 22px rgba(8, 124, 240, 0.26);
 }
 
 .button-secondary {
@@ -502,6 +565,7 @@ textarea:disabled {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
 }
@@ -810,8 +874,8 @@ textarea:disabled {
 .field select:focus,
 .field textarea:focus,
 .login-card input:focus {
-  border-color: #5b8bec;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #3b91ed;
+  box-shadow: 0 0 0 3px rgba(8, 124, 240, 0.12);
 }
 
 .checkbox-grid {
@@ -836,7 +900,7 @@ textarea:disabled {
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
-  accent-color: #2563eb;
+  accent-color: var(--blue);
 }
 
 .form-actions {
@@ -1156,17 +1220,21 @@ textarea:disabled {
   flex-direction: column;
   justify-content: space-between;
   background:
-    radial-gradient(circle at 80% 20%, rgba(53, 167, 131, 0.26), transparent 27%),
-    radial-gradient(circle at 10% 90%, rgba(55, 102, 182, 0.32), transparent 34%),
-    #10233f;
-  color: white;
+    radial-gradient(circle at 82% 18%, rgba(8, 165, 255, 0.2), transparent 27%),
+    radial-gradient(circle at 8% 90%, rgba(8, 92, 200, 0.18), transparent 35%),
+    linear-gradient(145deg, #f9fcff, #e9f3ff);
+  color: var(--navy);
   padding: clamp(36px, 6vw, 80px);
 }
 
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+}
+
+.login-brand .brand-logo-horizontal {
+  width: min(100%, 340px);
+  filter: drop-shadow(0 14px 24px rgba(7, 26, 51, 0.14));
 }
 
 .login-copy {
@@ -1182,7 +1250,7 @@ textarea:disabled {
 
 .login-copy p {
   max-width: 520px;
-  color: #b8c8dc;
+  color: #425b76;
   font-size: 16px;
   line-height: 1.65;
 }
@@ -1190,7 +1258,7 @@ textarea:disabled {
 .login-points {
   display: flex;
   gap: 26px;
-  color: #b8c8dc;
+  color: #37536f;
   font-size: 11px;
 }
 
@@ -1215,6 +1283,15 @@ textarea:disabled {
   padding: 30px;
 }
 
+.login-card-brand {
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 20px;
+  border: 0;
+  border-radius: 0;
+  filter: drop-shadow(0 10px 18px rgba(7, 26, 51, 0.16));
+}
+
 .login-card-icon {
   display: grid;
   width: 45px;
@@ -1222,8 +1299,8 @@ textarea:disabled {
   margin-bottom: 17px;
   place-items: center;
   border-radius: 13px;
-  background: #e9f1ff;
-  color: #255fc9;
+  background: #e7f3ff;
+  color: var(--blue-deep);
 }
 
 .login-card h2 {
@@ -1272,7 +1349,7 @@ textarea:disabled {
   min-height: 100vh;
   place-items: center;
   background:
-    radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.1), transparent 28%),
+    radial-gradient(circle at 15% 10%, rgba(8, 124, 240, 0.12), transparent 28%),
     #f4f7fb;
   padding: 24px;
 }
@@ -1774,6 +1851,9 @@ textarea:disabled {
 
 @media (max-width: 900px) {
   .sidebar {
+    width: min(88vw, 300px);
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
     transform: translateX(-100%);
     transition: transform 180ms ease;
   }
@@ -1800,26 +1880,44 @@ textarea:disabled {
   }
 
   .mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 25;
     display: flex;
-    height: 58px;
+    min-height: 64px;
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid #dde5ef;
-    background: white;
-    padding: 0 20px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 5px 20px rgba(7, 26, 51, 0.06);
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(20px, env(safe-area-inset-right))
+      8px
+      max(20px, env(safe-area-inset-left));
+    backdrop-filter: blur(12px);
   }
 
   .mobile-topbar button {
     display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
     border: 0;
+    border-radius: 11px;
     background: transparent;
     color: #28415f;
     place-items: center;
   }
 
+  .mobile-topbar button:active {
+    background: #edf4fc;
+  }
+
   .mobile-topbar strong {
     color: #17304f;
-    font-size: 14px;
+    font-size: 15px;
+    letter-spacing: 0.025em;
   }
 
   .main-content {
@@ -1847,7 +1945,11 @@ textarea:disabled {
 
 @media (max-width: 650px) {
   .main-content {
-    padding: 22px 16px 38px;
+    padding:
+      22px
+      max(16px, env(safe-area-inset-right))
+      max(38px, calc(env(safe-area-inset-bottom) + 24px))
+      max(16px, env(safe-area-inset-left));
   }
 
   .page-header {
@@ -1927,6 +2029,17 @@ textarea:disabled {
     border-radius: 13px;
   }
 
+  .button {
+    min-height: 48px;
+    padding-inline: 17px;
+    font-size: 15px;
+  }
+
+  .button-small {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
   .card-header {
     align-items: flex-start;
     gap: 12px;
@@ -1940,6 +2053,44 @@ textarea:disabled {
 
   .form-grid {
     gap: 14px;
+  }
+
+  .field,
+  .login-card label {
+    gap: 8px;
+    font-size: 15px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea,
+  .login-card input {
+    min-height: 52px;
+    border-radius: 11px;
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .checkbox-card {
+    min-height: 52px;
+    font-size: 15px;
+  }
+
+  .table-wrap {
+    margin-inline: -1px;
+  }
+
+  .data-table {
+    min-width: 640px;
+  }
+
+  .data-table th {
+    padding-block: 13px;
+  }
+
+  .data-table td {
+    padding-block: 16px;
+    font-size: 14px;
   }
 
   .form-actions {
@@ -2001,8 +2152,12 @@ textarea:disabled {
   }
 
   .login-visual {
-    min-height: 320px;
+    min-height: 420px;
     padding: 34px 26px;
+  }
+
+  .login-brand .brand-logo-horizontal {
+    width: min(100%, 270px);
   }
 
   .login-copy h1 {
@@ -2026,7 +2181,21 @@ textarea:disabled {
 
 @media (max-width: 420px) {
   .mobile-topbar {
-    padding: 0 14px;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .mobile-brand {
+    gap: 8px;
+  }
+
+  .mobile-brand .brand-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mobile-topbar strong {
+    font-size: 14px;
   }
 
   .main-content {
@@ -2082,7 +2251,7 @@ textarea:disabled {
   }
 
   .login-visual {
-    min-height: 280px;
+    min-height: 390px;
     padding: 28px 20px;
   }
 

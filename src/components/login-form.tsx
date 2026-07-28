@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowRight, LoaderCircle, LockKeyhole } from "lucide-react";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
 export function LoginForm({
@@ -62,9 +63,7 @@ export function LoginForm({
   if (!configured) {
     return (
       <div className="login-card">
-        <div className="login-card-icon">
-          <LockKeyhole size={22} />
-        </div>
+        <BrandLogo className="login-card-brand" variant="symbol" />
         <h2>Ambiente de demonstração</h2>
         <p>
           Navegue pelo sistema com dados de exemplo enquanto a infraestrutura é
@@ -80,9 +79,7 @@ export function LoginForm({
 
   return (
     <form className="login-card" onSubmit={submit}>
-      <div className="login-card-icon">
-        <LockKeyhole size={22} />
-      </div>
+      <BrandLogo className="login-card-brand" variant="symbol" />
       <h2>{mode === "login" ? "Entrar no sistema" : "Criar primeiro acesso"}</h2>
       <p>
         {mode === "login"

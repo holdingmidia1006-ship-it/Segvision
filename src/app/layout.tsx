@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getAppUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,12 +14,44 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: "SEG VISIOM",
+  metadataBase: new URL(getAppUrl()),
   title: {
-    default: "Eupresa Gestão",
-    template: "%s | Eupresa Gestão",
+    default: "SEG VISIOM",
+    template: "%s | SEG VISIOM",
   },
   description:
-    "Gestão simples de orçamentos, serviços, equipe, custos e documentos.",
+    "Gestão de campo para segurança, energia e conectividade.",
+  icons: {
+    icon: [
+      {
+        url: "/segvisiom/logo-simbolo-transparente.png",
+        type: "image/png",
+      },
+    ],
+    apple: "/segvisiom/logo-simbolo-transparente.png",
+  },
+  openGraph: {
+    title: "SEG VISIOM",
+    description: "Segurança, energia e conectividade em uma operação integrada.",
+    siteName: "SEG VISIOM",
+    locale: "pt_BR",
+    type: "website",
+    images: [
+      {
+        url: "/segvisiom/logo-horizontal-transparente.png",
+        width: 1774,
+        height: 887,
+        alt: "SEG VISIOM - Segurança, Energia e Conectividade",
+      },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#071a33",
+  colorScheme: "light",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BarChart3,
   BookOpenText,
   BriefcaseBusiness,
   CalendarDays,
@@ -19,6 +18,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { signOut } from "@/lib/actions";
 import { cn, initials } from "@/lib/utils";
 
@@ -56,15 +56,27 @@ export function AppShell({
 
   return (
     <div className="app-shell">
-      <aside className={cn("sidebar", open && "sidebar-open")}>
+      <aside
+        className={cn("sidebar", open && "sidebar-open")}
+        id="main-navigation"
+      >
         <div className="brand">
-          <div className="brand-mark">
-            <BarChart3 aria-hidden="true" size={22} />
-          </div>
-          <div>
-            <strong>Eupresa</strong>
-            <span>Gestão de serviços</span>
-          </div>
+          <Link
+            className="brand-home"
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+          >
+            <BrandLogo
+              className="brand-logo-sidebar"
+              decorative
+              priority
+              variant="symbol"
+            />
+            <div>
+              <strong>SEG VISIOM</strong>
+              <span>Operações de campo</span>
+            </div>
+          </Link>
           <button
             className="mobile-close"
             type="button"
@@ -80,28 +92,28 @@ export function AppShell({
           {navigation
             .filter((item) => !item.adminOnly || demo || role === "ADMIN")
             .map((item) => {
-            const Icon = item.icon;
-            const active =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn("nav-link", active && "nav-link-active")}
-                onClick={() => setOpen(false)}
-              >
-                <Icon aria-hidden="true" size={18} />
-                <span>{item.label}</span>
-              </Link>
-            );
+              const Icon = item.icon;
+              const active =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn("nav-link", active && "nav-link-active")}
+                  onClick={() => setOpen(false)}
+                >
+                  <Icon aria-hidden="true" size={18} />
+                  <span>{item.label}</span>
+                </Link>
+              );
             })}
         </nav>
 
         <div className="sidebar-help">
           <BookOpenText aria-hidden="true" size={20} />
-          <strong>Fluxo simples</strong>
-          <span>Orçamento, execução, garantia e finalização no mesmo lugar.</span>
+          <strong>Operação conectada</strong>
+          <span>Segurança, energia e conectividade do orçamento à entrega.</span>
         </div>
 
         <div className="user-card">
@@ -137,13 +149,18 @@ export function AppShell({
       <div className="main-column">
         <div className="mobile-topbar">
           <button
+            aria-controls="main-navigation"
+            aria-expanded={open}
             type="button"
             onClick={() => setOpen(true)}
             aria-label="Abrir menu"
           >
             <Menu size={22} />
           </button>
-          <strong>Eupresa Gestão</strong>
+          <Link className="mobile-brand" href="/dashboard">
+            <BrandLogo decorative variant="symbol" />
+            <strong>SEG VISIOM</strong>
+          </Link>
         </div>
         {demo ? (
           <div className="demo-banner">
